@@ -10,7 +10,7 @@ from .serializers import DateSerializer, SearchSerializer
 import json
 from .util import *
 
-# Create your views here.
+# [ {"date": "2022-10-08"} ] / String 문자열 "2022-10-08"
 @api_view(['POST'])
 def Post_Date_Back_Song_Title(request):
     if request.method == 'GET':
@@ -25,6 +25,7 @@ def Post_Date_Back_Song_Title(request):
             return Response(serializer.data ,status=200)
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
 
+# [ {"search": "Bad habbits"} ] / String 문자열 "Bad habbits"
 @api_view(['POST'])
 def Post_Title_Back_Song_Status(request):
     if request.method == 'GET':
