@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-
+from .models import MusicStatus
 
 import datetime
 import base64
@@ -24,7 +24,9 @@ class Spotify_audio_features:
         # get track id information
         track_info = self.sp.search(q=song, type='track', market='JP')
         track_id = track_info["tracks"]["items"][0]["id"]
+        #if MusicStatus.objects.filter(track_id=track_id).exists():
 
+        artist = track_info["tracks"]["items"][0]["artists"][0]["name"]
         # get audio_feature
         features = self.sp.audio_features(tracks=[track_id])
         acousticness = features[0]["acousticness"]
@@ -42,7 +44,9 @@ class Spotify_audio_features:
                     "loudness" : loudness,
                     "valence" : valence,
                     "mode" : mode}
-        
+        music_status = MusicStatus(track_id=track_id, title=song, artist=artist, acousticness=acousticness,
+        danceability=danceability, energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode)
+        music_status.save()
         return result
     def get_top(self):
         self.sp.current_user_top_tracks(20, 0, 'medium_term')

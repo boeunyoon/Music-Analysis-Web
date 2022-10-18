@@ -2,5 +2,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('post', views.Post_Date_Back_Song_Title)
+    path('get-top-100', views.Post_Date_Back_Song_Title),
+    path('search-song', views.Post_Title_Back_Song_Status),
 ] 
