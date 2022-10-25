@@ -35,9 +35,16 @@ def Post_Title_Back_Song_Status(request):
         serializer = SearchSerializer(data = request.data, many=True)
         if(serializer.is_valid()):
             search=json_data[0]['search']
-            print(search)
+            print("검색어: ", search)
             saf = Spotify_audio_features()
-            saf.get_features(search)
+            searched_data = saf.get_features(search) #데이터 검색
+
+            #검색 결과가 없으면 None을 return 한다.
+            if searched_data == None: 
+                print("검색실패")
+            else:
+                searched_json_data = json.dumps(searched_data) #json 데이터로 변환
+                print(searched_data[0]["artist"]) 
 
             return Response(serializer.data ,status=200)
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
