@@ -1,23 +1,14 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import Note
-from .serializers import NoteSerializer
+from .serializers import NoteSerializer, MyTokenObtainPairSerializer, RegisterSerializer
 from django.http import JsonResponse
+from rest_framework import generics
+from rest_framework.permissions import AllowAny, IsAuthenticated
 # Create your views here.
-
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Add custom claims
-        token['username'] = user.username
-        # ...
-
-        return token
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -83,3 +74,10 @@ def updateNote(request, pk):
          serializer.save()
   
      return Response(serializer.data) 
+
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
+
