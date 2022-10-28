@@ -10,6 +10,9 @@ class Date(models.Model):
 class SearchTitle(models.Model):
     search = models.TextField()
 
+    def __str__(self):
+        return self.search
+
 
 class MusicStatus(models.Model):
     track_id = models.TextField()

@@ -5,10 +5,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from django.http.response import HttpResponse
-from .models import Date
+from .models import Date, SearchTitle
 from .serializers import DateSerializer, SearchSerializer 
 import json
 from .util import *
+
 
 # [ {"date": "2022-10-08"} ] / String 문자열 "2022-10-08"
 @api_view(['POST'])
@@ -38,13 +39,12 @@ def Post_Title_Back_Song_Status(request):
             print("검색어: ", search)
             saf = Spotify_audio_features()
             searched_data = saf.get_features(search) #데이터 검색
-
             #검색 결과가 없으면 None을 return 한다.
             if searched_data == None: 
                 print("검색실패")
             else:
                 searched_json_data = json.dumps(searched_data) #json 데이터로 변환
-                print(searched_data[0]["artist"]) 
+                print(searched_data[0]["artist"])
 
             return Response(serializer.data ,status=200)
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
