@@ -10,9 +10,10 @@ from .serializers import DateSerializer, SearchSerializer
 import json
 from django.http import JsonResponse
 from .util import *
+from datetime import datetime
 
 
-# [ {"date": "2022-10-08"} ] / String 문자열 "2022-10-08"
+# [ {"date": "2022-10-08", "rank": "{}"} ] / String 문자열 "2022-10-08"
 @api_view(['POST'])
 def Post_Date_Back_Song_Title(request):
     if request.method == 'GET':
@@ -22,7 +23,17 @@ def Post_Date_Back_Song_Title(request):
         serializer = DateSerializer(data = request.data, many=True)
         if(serializer.is_valid()):
             date=json_data[0]['date']
-            song_titles = get_top_100(date)
+            datetime_format = "%Y-%m-%d"
+            try:
+                datetime_result = datetime.strptime(date, datetime_format)
+            except:
+                print("잘못된 날짜입니다.")
+                return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
+            else:
+                print("성공")
+                song_titles = get_top_100(date)
+                get_avg_status_for_top_100(date)
+                #return JsonResponse(song_titles, safe=False)
             
             return Response(serializer.data ,status=200)
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
@@ -48,7 +59,6 @@ def Post_Title_Back_Song_Status(request):
             else:
                 searched_json_data = json.dumps(searched_data) #json 데이터로 변환
                 print(searched_data[0]["artist"])
-                #return Response(serializer.data ,status=status.HTTP_200_OK)
                 return JsonResponse(searched_json_data, safe=False)
 
             

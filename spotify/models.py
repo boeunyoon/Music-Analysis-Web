@@ -3,9 +3,14 @@ from django.db import models
 
 class Date(models.Model):
     date = models.CharField(max_length=11)
-
+    rank = models.TextField()
     def __str__(self):
         return self.date
+
+class Top100ByDate:
+    date = models.CharField(max_length=10, primary_key=True)
+    
+
 
 class SearchTitle(models.Model):
     search = models.TextField()
