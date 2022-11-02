@@ -13,7 +13,7 @@ from .util import *
 from datetime import datetime
 
 
-# [ {"date": "2022-10-08", "rank": "{}"} ] / String 문자열 "2022-10-08"
+# [ {"date": "2022-10-08"} ] / String 문자열 "2022-10-08"
 @api_view(['POST'])
 def Post_Date_Back_Song_Title(request):
     if request.method == 'GET':
@@ -25,17 +25,19 @@ def Post_Date_Back_Song_Title(request):
             date=json_data[0]['date']
             datetime_format = "%Y-%m-%d"
             try:
-                datetime_result = datetime.strptime(date, datetime_format)
+                datetime.strptime(date, datetime_format)
             except:
                 print("잘못된 날짜입니다.")
                 return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
             else:
-                print("성공")
-                song_titles = get_top_100(date)
-                get_avg_status_for_top_100(date)
-                #return JsonResponse(song_titles, safe=False)
+                print("검색 중")
+                top_100_data = get_top_100(date)
+                top_100_json_data = json.dumps(top_100_data) #json 데이터로 변환
+                print(top_100_data["averge_status"])
+                print("검색 성공")
+                return JsonResponse(top_100_json_data, safe=False)
             
-            return Response(serializer.data ,status=200)
+            #return Response(serializer.data ,status=200)
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
 
 # [ {"search": "Bad habbits"} ] / String 문자열 "Bad habbits"
@@ -50,16 +52,15 @@ def Post_Title_Back_Song_Status(request):
             search=json_data[0]['search']
             print("검색어: ", search)
             saf = Spotify_audio_features()
-            searched_data = saf.get_features(search) #데이터 검색
+            searched_data = saf.get_features(search, limit=5) #데이터 검색
             #검색 결과가 없으면 None을 return 한다.
             if searched_data == None: 
-                print("검색실패")
+                print("검색 실패")
                 return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
 
             else:
                 searched_json_data = json.dumps(searched_data) #json 데이터로 변환
-                print(searched_data[0]["artist"])
-                print(searched_data[0]["popularity"])
+                print("검색 성공")
                 return JsonResponse(searched_json_data, safe=False)
 
             

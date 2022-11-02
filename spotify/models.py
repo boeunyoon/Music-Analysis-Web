@@ -8,7 +8,7 @@ class Date(models.Model):
     def __str__(self):
         return self.date
 
-class Top100ByDate:
+class Top100ByDate(models.Model):
     date = models.CharField(max_length=10, primary_key=True)
     rank = models.TextField()
     #top100까지의 평균 스탯
@@ -23,6 +23,7 @@ class Top100ByDate:
     instrumentalness = models.FloatField()
     tempo = models.FloatField()
     duration_ms = models.IntegerField()
+    popularity = models.IntegerField(default = 0)
     def __str__(self):
         return self.date
 

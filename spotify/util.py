@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from .models import MusicStatus, Date
+from .models import MusicStatus, Date, Top100ByDate
 
 import datetime
 import base64
@@ -50,7 +50,7 @@ class Spotify_audio_features:
                             "instrumentalness": data.instrumentalness,
                             "tempo": data.tempo,
                             "duration_ms": data.duration_ms,
-                            "popularity": popularity
+                            "popularity": data.popularity
                             }
                 return_data.append(result)
             else:
@@ -99,18 +99,32 @@ class Spotify_audio_features:
         
 
 def get_top_100(date):
-    if Date.objects.filter(date=date).exists():
-        data = Date.objects.get(date=date)
+
+
+    if Top100ByDate.objects.filter(date=date).exists():
+        data = Top100ByDate.objects.get(date=date)
         
         result = {
             "date": data.date,
-            "rank": data.rank
+            "rank": data.rank,
+            "averge_status": {
+                "acousticness" : data.acousticness,
+                "danceability" : data.danceability,
+                "energy" : data.energy,
+                "liveness" : data.liveness,
+                "loudness" : data.loudness,
+                "valence" : data.valence,
+                "mode" : data.mode,
+                "speechiness": data.speechiness,
+                "instrumentalness": data.instrumentalness,
+                "tempo": data.tempo,
+                "duration_ms": data.duration_ms,
+                "popularity": data.popularity
+            }
         }
 
         return result
     else:      
-        sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
-
         #빌보드 Top 100 데이터 가져오기
         #날짜 타입은 YYYY-MM-DD
         url = 'https://www.billboard.com/charts/hot-100/'
@@ -130,18 +144,83 @@ def get_top_100(date):
         top_1 = [song.get_text().strip() for song in top_1_song]
 
         top_100.insert(0, top_1[0])
+
+        #평균 스탯을 계산한다.
+        saf = Spotify_audio_features()
+        acousticness = 0
+        danceability = 0
+        energy = 0
+        liveness = 0
+        loudness = 0
+        valence = 0
+        mode = 0
+        speechiness = 0
+        instrumentalness = 0
+        tempo = 0
+        duration_ms = 0
+        popularity = 0
+
+        for i in range(0, 100):
+            searched_data = saf.get_features(top_100[i], limit=1)
+            acousticness += searched_data[0]["acousticness"]
+            danceability += searched_data[0]["danceability"]
+            energy += searched_data[0]["energy"]
+            liveness += searched_data[0]["liveness"]
+            loudness += searched_data[0]["loudness"]
+            valence += searched_data[0]["valence"]
+            mode += searched_data[0]["mode"]
+            speechiness += searched_data[0]["speechiness"]
+            instrumentalness += searched_data[0]["instrumentalness"]
+            tempo += searched_data[0]["tempo"]
+            duration_ms += searched_data[0]["duration_ms"]
+            popularity += searched_data[0]["popularity"]
+
+        acousticness /= 100
+        danceability /= 100
+        energy /= 100
+        liveness /= 100
+        loudness /= 100
+        valence /= 100
+        mode /= 100
+        speechiness /= 100
+        instrumentalness /= 100
+        tempo /= 100
+        duration_ms = round(duration_ms/100)
+        popularity = round(popularity/100)
+        
         result = {
             "date": date,
-            "rank": top_100
+            "rank": top_100,
+            "averge_status": {
+                "acousticness" : acousticness,
+                "danceability" : danceability,
+                "energy" : energy,
+                "liveness" : liveness,
+                "loudness" : loudness,
+                "valence" : valence,
+                "mode" : mode,
+                "speechiness": speechiness,
+                "instrumentalness": instrumentalness,
+                "tempo": tempo,
+                "duration_ms": duration_ms,
+                "popularity": popularity
+            }
+            
         }
 
-        top_100_with_date = Date(date=date, rank=top_100)
-        top_100_with_date.save()
+        top_100_by_date = Top100ByDate(date=date, rank=top_100, acousticness=acousticness, danceability=danceability, 
+                                        energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode,
+                                        speechiness=speechiness, instrumentalness=instrumentalness, tempo=tempo, 
+                                        duration_ms=duration_ms, popularity=popularity)
+        top_100_by_date.save()
 
         return result
 
+
+# 쓰지 않는 함수
 def get_avg_status_for_top_100(date):
-    data = Date.objects.get(date=date)
+    
+    data = Top100ByDate.objects.get(date=date)
     rank = ast.literal_eval(data.rank)
     saf = Spotify_audio_features()
 
@@ -152,6 +231,11 @@ def get_avg_status_for_top_100(date):
     loudness = 0
     valence = 0
     mode = 0
+    speechiness = 0
+    instrumentalness = 0
+    tempo = 0
+    duration_ms = 0
+    popularity = 0
 
     for i in range(0, 100):
         searched_data = saf.get_features(rank[i], limit=1)
@@ -162,7 +246,11 @@ def get_avg_status_for_top_100(date):
         loudness += searched_data[0]["loudness"]
         valence += searched_data[0]["valence"]
         mode += searched_data[0]["mode"]
-        print(searched_data[0]["title"])
+        speechiness += searched_data[0]["speechiness"]
+        instrumentalness += searched_data[0]["instrumentalness"]
+        tempo += searched_data[0]["tempo"]
+        duration_ms += searched_data[0]["duration_ms"]
+        popularity += searched_data[0]["popularity"]
     
     avg_acousticness = acousticness/100
     avg_danceability = danceability/100
