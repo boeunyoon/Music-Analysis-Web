@@ -59,6 +59,7 @@ def Post_Title_Back_Song_Status(request):
             else:
                 searched_json_data = json.dumps(searched_data) #json 데이터로 변환
                 print(searched_data[0]["artist"])
+                print(searched_data[0]["popularity"])
                 return JsonResponse(searched_json_data, safe=False)
 
             

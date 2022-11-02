@@ -45,7 +45,13 @@ class Spotify_audio_features:
                             "liveness" : data.liveness,
                             "loudness" : data.loudness,
                             "valence" : data.valence,
-                            "mode" : data.mode}
+                            "mode" : data.mode,
+                            "speechiness": data.speechiness,
+                            "instrumentalness": data.instrumentalness,
+                            "tempo": data.tempo,
+                            "duration_ms": data.duration_ms,
+                            "popularity": popularity
+                            }
                 return_data.append(result)
             else:
                 title = track_info["tracks"]["items"][i]["name"]
@@ -59,7 +65,11 @@ class Spotify_audio_features:
                 loudness = features[0]["loudness"]
                 valence = features[0]["valence"]
                 mode = features[0]["mode"]
-
+                speechiness = features[0]["speechiness"]
+                instrumentalness = features[0]["instrumentalness"]
+                tempo = features[0]["tempo"]
+                duration_ms = features[0]["duration_ms"]
+                popularity = track_info["tracks"]["items"][i]["popularity"]
                 result = {"track_id" : track_id,
                             "title": title,
                             "artist": artist,
@@ -69,9 +79,17 @@ class Spotify_audio_features:
                             "liveness" : liveness,
                             "loudness" : loudness,
                             "valence" : valence,
-                            "mode" : mode}
+                            "mode" : mode,
+                            "speechiness": speechiness,
+                            "instrumentalness": instrumentalness,
+                            "tempo": tempo,
+                            "duration_ms": duration_ms,
+                            "popularity": popularity
+                            }
                 music_status = MusicStatus(track_id=track_id, title=title, artist=artist, acousticness=acousticness,
-                danceability=danceability, energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode)
+                danceability=danceability, energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode,
+                speechiness=speechiness, instrumentalness=instrumentalness, tempo=tempo, duration_ms=duration_ms, 
+                popularity=popularity)
                 music_status.save()
                 return_data.append(result)
         
