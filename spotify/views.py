@@ -33,7 +33,6 @@ def Post_Date_Back_Song_Title(request):
                 print("검색 중")
                 top_100_data = get_top_100(date)
                 top_100_json_data = json.dumps(top_100_data) #json 데이터로 변환
-                print(top_100_json_data)
                 print("검색 성공")
                 return JsonResponse(top_100_json_data, safe=False)
             

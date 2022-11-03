@@ -23,7 +23,7 @@ class Spotify_audio_features:
 
     def get_album_image(self, song, limit=10, track_info=None):
         #get_features 함수에서 접근하는 것이 아닐 경우 직접 이미지 데이터를 가져온다.
-        print("이미지 가져오기 함수")
+
         if track_info is None:
             track_info = self.sp.search(q=song, limit=limit, type='track', market='US')
 
