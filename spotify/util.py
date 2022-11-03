@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from .models import MusicStatus, Date, Top100ByDate
+from .models import MusicStatus, Top100ByDate, AlbumImage
 
 import datetime
 import base64
@@ -21,7 +21,81 @@ class Spotify_audio_features:
         client_credentials_manager = SpotifyClientCredentials(client_id=cid, client_secret=secret)
         self.sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
-    def get_features(self, song, limit = 10):
+    def get_album_image(self, song, limit=10, track_info=None):
+        #get_features 함수에서 접근하는 것이 아닐 경우 직접 이미지 데이터를 가져온다.
+        print("이미지 가져오기 함수")
+        if track_info is None:
+            track_info = self.sp.search(q=song, limit=limit, type='track', market='US')
+
+        if track_info["tracks"]["items"] == []:
+            return None
+        
+        json_length = len(track_info["tracks"]["items"])
+        return_data = []
+
+        for i in range(0, json_length):
+            track_id = track_info["tracks"]["items"][i]["id"]
+            if AlbumImage.objects.filter(track_id=track_id).exists():
+                data = AlbumImage.objects.get(track_id=track_id)
+
+                result = {"track_id" : data.track_id,
+                        "title" : data.title,
+                        "artist" : data.artist,
+                        "images":[
+                            {
+                            "height":640,
+                            "url":data.img640,
+                            "width":640
+                            },
+                            {
+                            "height":300,
+                            "url":data.img300,
+                            "width":300
+                            },
+                            {
+                            "height":64,
+                            "url":data.img64,
+                            "width":64
+                            }
+                        ]
+                }
+                return_data.append(result)
+            else:
+                title = track_info["tracks"]["items"][i]["name"]
+                artist = track_info["tracks"]["items"][i]["artists"][0]["name"]
+                img640 = track_info["tracks"]["items"][i]["album"]["images"][0]["url"]
+                img300 = track_info["tracks"]["items"][i]["album"]["images"][1]["url"]
+                img64 = track_info["tracks"]["items"][i]["album"]["images"][2]["url"]
+
+                result = {"track_id" : track_id,
+                        "title" : title,
+                        "artist" : artist,
+                        "images":[
+                            {
+                            "height":640,
+                            "url":img640,
+                            "width":640
+                            },
+                            {
+                            "height":300,
+                            "url":img300,
+                            "width":300
+                            },
+                            {
+                            "height":64,
+                            "url":img64,
+                            "width":64
+                            }
+                        ]
+                }
+                album_image = AlbumImage(track_id=track_id, title=title, artist=artist,
+                                        img640=img640, img300=img300, img64=img64)
+                album_image.save()
+                return_data.append(result)
+        return return_data
+
+
+    def get_features(self, song, limit=10):
         # get track id information
         track_info = self.sp.search(q=song, limit=limit, type='track', market='US')
         if track_info["tracks"]["items"] == []:
@@ -33,6 +107,19 @@ class Spotify_audio_features:
 
         for i in range(0, json_length):
             track_id = track_info["tracks"]["items"][i]["id"]
+        
+
+            if AlbumImage.objects.filter(track_id=track_id).exists():
+                img_data = AlbumImage.objects.get(track_id=track_id)
+                img640 = img_data.img640
+                img300 = img_data.img300
+                img64 = img_data.img64
+            else:
+                img_data = self.get_album_image(song=song, limit=limit, track_info=track_info)
+                img640 = img_data[i]["images"][0]
+                img300 = img_data[i]["images"][1]
+                img64 = img_data[i]["images"][2]
+
             if MusicStatus.objects.filter(track_id=track_id).exists():
                 data = MusicStatus.objects.get(track_id=track_id)
 
@@ -50,7 +137,24 @@ class Spotify_audio_features:
                             "instrumentalness": data.instrumentalness,
                             "tempo": data.tempo,
                             "duration_ms": data.duration_ms,
-                            "popularity": data.popularity
+                            "popularity": data.popularity,
+                            "images":[
+                                    {
+                                    "height":640,
+                                    "url":img640,
+                                    "width":640
+                                    },
+                                    {
+                                    "height":300,
+                                    "url":img300,
+                                    "width":300
+                                    },
+                                    {
+                                    "height":64,
+                                    "url":img64,
+                                    "width":64
+                                    }
+                                ]
                             }
                 return_data.append(result)
             else:
@@ -84,7 +188,24 @@ class Spotify_audio_features:
                             "instrumentalness": instrumentalness,
                             "tempo": tempo,
                             "duration_ms": duration_ms,
-                            "popularity": popularity
+                            "popularity": popularity,
+                            "images":[
+                                    {
+                                    "height":640,
+                                    "url":img640,
+                                    "width":640
+                                    },
+                                    {
+                                    "height":300,
+                                    "url":img300,
+                                    "width":300
+                                    },
+                                    {
+                                    "height":64,
+                                    "url":img64,
+                                    "width":64
+                                    }
+                                ]
                             }
                 music_status = MusicStatus(track_id=track_id, title=title, artist=artist, acousticness=acousticness,
                 danceability=danceability, energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode,
@@ -96,11 +217,9 @@ class Spotify_audio_features:
         return return_data
     def get_top(self):
         self.sp.current_user_top_tracks(20, 0, 'medium_term')
-        
+    
 
 def get_top_100(date):
-
-
     if Top100ByDate.objects.filter(date=date).exists():
         data = Top100ByDate.objects.get(date=date)
         

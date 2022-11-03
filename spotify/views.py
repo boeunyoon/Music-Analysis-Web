@@ -33,14 +33,14 @@ def Post_Date_Back_Song_Title(request):
                 print("검색 중")
                 top_100_data = get_top_100(date)
                 top_100_json_data = json.dumps(top_100_data) #json 데이터로 변환
-                print(top_100_data["averge_status"])
+                print(top_100_json_data)
                 print("검색 성공")
                 return JsonResponse(top_100_json_data, safe=False)
             
             #return Response(serializer.data ,status=200)
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
 
-# [ {"search": "Bad habbits"} ] / String 문자열 "Bad habbits"
+# [ {"search": "Bad habits"} ] / String 문자열 "Bad habbits"
 @api_view(['POST'])
 def Post_Title_Back_Song_Status(request):
     if request.method == 'GET':
@@ -53,6 +53,10 @@ def Post_Title_Back_Song_Status(request):
             print("검색어: ", search)
             saf = Spotify_audio_features()
             searched_data = saf.get_features(search, limit=5) #데이터 검색
+            #이미지함수 테스트
+            #test = saf.get_album_image(search, limit=5)
+            #print(test[0]["images"][0])
+            
             #검색 결과가 없으면 None을 return 한다.
             if searched_data == None: 
                 print("검색 실패")
@@ -61,6 +65,7 @@ def Post_Title_Back_Song_Status(request):
             else:
                 searched_json_data = json.dumps(searched_data) #json 데이터로 변환
                 print("검색 성공")
+                #print(searched_data[0]["images"][0])
                 return JsonResponse(searched_json_data, safe=False)
 
             

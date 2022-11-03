@@ -34,6 +34,14 @@ class SearchTitle(models.Model):
         return self.search
 
 
+class AlbumImage(models.Model):
+    track_id = models.TextField(primary_key=True)
+    title = models.TextField()
+    artist = models.TextField()
+    img640 = models.TextField()
+    img300 = models.TextField()
+    img64 = models.TextField()
+
 class MusicStatus(models.Model):
     track_id = models.TextField(primary_key=True)
     title = models.TextField()

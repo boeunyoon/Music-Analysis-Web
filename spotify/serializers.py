@@ -1,7 +1,7 @@
 from dataclasses import field
 from datetime import date
 from rest_framework import serializers
-from .models import Date, MusicStatus, SearchTitle, Top100ByDate
+from .models import Date, MusicStatus, SearchTitle, Top100ByDate, AlbumImage
 
 class DateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +17,11 @@ class SearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = SearchTitle
         fields = '__all__'        
+
+class AlbumImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlbumImage
+        fields = '__all__'
 
 class MusicStatusSerializer(serializers.ModelSerializer):
     class Meta:
