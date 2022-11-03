@@ -336,6 +336,7 @@ def get_top_100(date):
         return result
 
 
+
 # 쓰지 않는 함수
 def get_avg_status_for_top_100(date):
     

@@ -52,9 +52,6 @@ def Post_Title_Back_Song_Status(request):
             print("검색어: ", search)
             saf = Spotify_audio_features()
             searched_data = saf.get_features(search, limit=5) #데이터 검색
-            #이미지함수 테스트
-            #test = saf.get_album_image(search, limit=5)
-            #print(test[0]["images"][0])
             
             #검색 결과가 없으면 None을 return 한다.
             if searched_data == None: 
