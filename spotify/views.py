@@ -32,6 +32,7 @@ def Post_Date_Back_Song_Title(request):
             else:
                 print("검색 중")
                 top_100_data = get_top_100(date)
+                #data_mining(date)
                 top_100_json_data = json.dumps(top_100_data) #json 데이터로 변환
                 print("검색 성공")
                 return JsonResponse(top_100_json_data, safe=False)
@@ -61,6 +62,7 @@ def Post_Title_Back_Song_Status(request):
             else:
                 searched_json_data = json.dumps(searched_data) #json 데이터로 변환
                 print("검색 성공")
+                #print(searched_json_data)
                 #print(searched_data[0]["images"][0])
                 return JsonResponse(searched_json_data, safe=False)
 

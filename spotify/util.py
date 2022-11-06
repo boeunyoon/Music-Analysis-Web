@@ -99,7 +99,14 @@ class Spotify_audio_features:
         # get track id information
         track_info = self.sp.search(q=song, limit=limit, type='track', market='US')
         if track_info["tracks"]["items"] == []:
-            return None
+            #특수문자 검사
+            song = str(song)
+            song = song.replace('*', 'i')
+            track_info = self.sp.search(q=song, type='track', market='US')
+
+            #재검사 이후에도 검색 결과가 없으면 None 반환
+            if track_info["tracks"]["items"] == []:
+                return None
 
 
         json_length = len(track_info["tracks"]["items"])
@@ -162,18 +169,33 @@ class Spotify_audio_features:
                 artist = track_info["tracks"]["items"][i]["artists"][0]["name"]
                 # get audio_feature
                 features = self.sp.audio_features(tracks=[track_id])
-                acousticness = features[0]["acousticness"]
-                danceability = features[0]["danceability"]
-                energy = features[0]["energy"]
-                liveness = features[0]["liveness"]
-                loudness = features[0]["loudness"]
-                valence = features[0]["valence"]
-                mode = features[0]["mode"]
-                speechiness = features[0]["speechiness"]
-                instrumentalness = features[0]["instrumentalness"]
-                tempo = features[0]["tempo"]
-                duration_ms = features[0]["duration_ms"]
-                popularity = track_info["tracks"]["items"][i]["popularity"]
+                if features[0] == None:
+                    acousticness = None
+                    danceability = None
+                    energy = None
+                    liveness = None
+                    loudness = None
+                    valence = None
+                    mode = None
+                    speechiness = None
+                    instrumentalness = None
+                    tempo = None
+                    duration_ms = None
+                    popularity = None
+                else:
+                    acousticness = features[0]["acousticness"]
+                    danceability = features[0]["danceability"]
+                    energy = features[0]["energy"]
+                    liveness = features[0]["liveness"]
+                    loudness = features[0]["loudness"]
+                    valence = features[0]["valence"]
+                    mode = features[0]["mode"]
+                    speechiness = features[0]["speechiness"]
+                    instrumentalness = features[0]["instrumentalness"]
+                    tempo = features[0]["tempo"]
+                    duration_ms = features[0]["duration_ms"]
+                    popularity = track_info["tracks"]["items"][i]["popularity"]
+
                 result = {"track_id" : track_id,
                             "title": title,
                             "artist": artist,
@@ -279,8 +301,14 @@ def get_top_100(date):
         duration_ms = 0
         popularity = 0
 
+        rank_amount = 100
+
         for i in range(0, 100):
             searched_data = saf.get_features(top_100[i], limit=1)
+            print(searched_data)
+            if searched_data[0]["acousticness"] == None:
+                rank_amount -= 1
+                continue
             acousticness += searched_data[0]["acousticness"]
             danceability += searched_data[0]["danceability"]
             energy += searched_data[0]["energy"]
@@ -294,18 +322,19 @@ def get_top_100(date):
             duration_ms += searched_data[0]["duration_ms"]
             popularity += searched_data[0]["popularity"]
 
-        acousticness /= 100
-        danceability /= 100
-        energy /= 100
-        liveness /= 100
-        loudness /= 100
-        valence /= 100
-        mode /= 100
-        speechiness /= 100
-        instrumentalness /= 100
-        tempo /= 100
-        duration_ms = round(duration_ms/100)
-        popularity = round(popularity/100)
+        print(rank_amount)
+        acousticness /= rank_amount
+        danceability /= rank_amount
+        energy /= rank_amount
+        liveness /= rank_amount
+        loudness /= rank_amount
+        valence /= rank_amount
+        mode /= rank_amount
+        speechiness /= rank_amount
+        instrumentalness /= rank_amount
+        tempo /= rank_amount
+        duration_ms = round(duration_ms/rank_amount)
+        popularity = round(popularity/rank_amount)
         
         result = {
             "date": date,
@@ -335,6 +364,46 @@ def get_top_100(date):
 
         return result
 
+def data_mining(date):
+    date_to_int = date.split(sep='-')
+    date_to_int = list(map(int, date_to_int))
+    saf = Spotify_audio_features()
+
+    while date!="2022-10-08":
+        print(date)
+        get_top_100(date)
+        if date_to_int[0]%4 == 0 and date_to_int[1] == 2:
+            if date_to_int[2] == 29:
+                date_to_int[2] = 0
+                date_to_int[1] += 1
+            date_to_int[2] = date_to_int[2] + 1
+        elif date_to_int[1] == 2 and date_to_int[2] == 28:
+            date_to_int[2] = 1
+            date_to_int[1] += 1
+        elif date_to_int[2] == 30 and (date_to_int[1] == 4 or date_to_int[1] == 6
+                                or date_to_int[1] == 9 or date_to_int[1] == 11):
+            date_to_int[2] = 1
+            date_to_int[1] += 1
+        elif date_to_int[2] == 31:
+            date_to_int[2] = 1
+            date_to_int[1] += 1
+        else:
+            date_to_int[2] = date_to_int[2] + 1
+
+        if date_to_int[1] == 13:
+            date_to_int[1] = 1
+            date_to_int[0] += 1
+
+        year = str(date_to_int[0])
+        month = str(date_to_int[1])
+        day = str(date_to_int[2])
+        if len(month) == 1:
+            month = "0" + month
+        if len(day) == 1:
+            day = "0" + day 
+
+        date = year + "-" + month + "-" + day
+        
 
 
 # 쓰지 않는 함수
