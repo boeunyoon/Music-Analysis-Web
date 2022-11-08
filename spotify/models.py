@@ -11,6 +11,10 @@ class Date(models.Model):
 class Top100ByDate(models.Model):
     date = models.CharField(max_length=10, primary_key=True)
     rank = models.TextField()
+    rank_with_artist = models.TextField(default = None, null=True)
+    rank_with_img64 = models.TextField(default = None, null=True)
+    rank_with_img300 = models.TextField(default = None, null=True)
+    rank_with_img640 = models.TextField(default = None, null=True)
     #top100까지의 평균 스탯
     acousticness = models.FloatField() 
     danceability = models.FloatField()

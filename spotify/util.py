@@ -244,10 +244,56 @@ class Spotify_audio_features:
 def get_top_100(date):
     if Top100ByDate.objects.filter(date=date).exists():
         data = Top100ByDate.objects.get(date=date)
-        
+        rank_with_title = ast.literal_eval(data.rank)#data.rank: 탑100 노래 이름
+
+        rank_with_artist = data.rank_with_artist
+        rank = []#rank: 탑100 json 형식 데이터
+        if rank_with_artist is None:
+            print("데이터없음")#추가된 모델에 데이터를 추가한다.
+            saf = Spotify_audio_features()
+
+            rank_with_artist = []
+            rank_with_img64 = []
+            rank_with_img300 = []
+            rank_with_img640 = []
+            for i in range(0, 100):
+                searched_data = saf.get_features(rank_with_title[i], limit=1)
+                #print(searched_data)
+                rank_data = {
+                    "title": searched_data[0]["title"],
+                    "artist": searched_data[0]["artist"],
+                    "images": searched_data[0]["images"]
+                }
+                rank_with_artist.append(searched_data[0]["artist"])
+                rank_with_img64.append(searched_data[0]["images"][2])
+                rank_with_img300.append(searched_data[0]["images"][1])
+                rank_with_img640.append(searched_data[0]["images"][0])
+                rank.append(rank_data)
+            data.rank_with_artist = rank_with_artist
+            data.rank_with_img300 = rank_with_img300
+            data.rank_with_img64 = rank_with_img64
+            data.rank_with_img640 = rank_with_img640
+            data.save()
+        else:
+            rank_with_artist = ast.literal_eval(data.rank_with_artist)
+            rank_with_img300 = ast.literal_eval(data.rank_with_img300)
+            rank_with_img64 = ast.literal_eval(data.rank_with_img64)
+            rank_with_img640 = ast.literal_eval(data.rank_with_img640)
+            for i in range(0, 100):
+                rank_data = {
+                    "title": rank_with_title[i],
+                    "artist": rank_with_artist[i],
+                    "images": [
+                                rank_with_img640[i],
+                                rank_with_img300[i],
+                                rank_with_img64[i]
+                    ]
+                }
+                rank.append(rank_data)
+
         result = {
             "date": data.date,
-            "rank": data.rank,
+            "rank": rank,
             "averge_status": {
                 "acousticness" : data.acousticness,
                 "danceability" : data.danceability,
@@ -302,10 +348,25 @@ def get_top_100(date):
         popularity = 0
 
         rank_amount = 100
+        rank = []
+        rank_with_artist = []
+        rank_with_img64 = []
+        rank_with_img300 = []
+        rank_with_img640 = []
 
         for i in range(0, 100):
             searched_data = saf.get_features(top_100[i], limit=1)
-            print(searched_data)
+            #print(searched_data)
+            rank_data = {
+                "title": searched_data[0]["title"],
+                "artist": searched_data[0]["artist"],
+                "images": searched_data[0]["images"]
+            }
+            rank_with_artist.append(searched_data[0]["artist"])
+            rank_with_img64.append(searched_data[0]["images"][2])
+            rank_with_img300.append(searched_data[0]["images"][1])
+            rank_with_img640.append(searched_data[0]["images"][0])
+            
             if searched_data[0]["acousticness"] == None:
                 rank_amount -= 1
                 continue
@@ -321,8 +382,9 @@ def get_top_100(date):
             tempo += searched_data[0]["tempo"]
             duration_ms += searched_data[0]["duration_ms"]
             popularity += searched_data[0]["popularity"]
-
-        print(rank_amount)
+            rank.append(rank_data)
+        
+        print(rank_data)
         acousticness /= rank_amount
         danceability /= rank_amount
         energy /= rank_amount
@@ -338,7 +400,7 @@ def get_top_100(date):
         
         result = {
             "date": date,
-            "rank": top_100,
+            "rank": rank,
             "averge_status": {
                 "acousticness" : acousticness,
                 "danceability" : danceability,
@@ -359,7 +421,9 @@ def get_top_100(date):
         top_100_by_date = Top100ByDate(date=date, rank=top_100, acousticness=acousticness, danceability=danceability, 
                                         energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode,
                                         speechiness=speechiness, instrumentalness=instrumentalness, tempo=tempo, 
-                                        duration_ms=duration_ms, popularity=popularity)
+                                        duration_ms=duration_ms, popularity=popularity, rank_with_artist=rank_with_artist,
+                                        rank_with_img300=rank_with_img300, rank_with_img64=rank_with_img64,
+                                        rank_with_img640=rank_with_img640)
         top_100_by_date.save()
 
         return result
