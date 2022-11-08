@@ -5,6 +5,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from .models import MusicStatus, Top100ByDate, AlbumImage
 
 import datetime
+from datetime import date
 import base64
 from urllib.parse import urlencode
 import ast
@@ -241,15 +242,14 @@ class Spotify_audio_features:
         self.sp.current_user_top_tracks(20, 0, 'medium_term')
     
 
-def get_top_100(date):
-    if Top100ByDate.objects.filter(date=date).exists():
-        data = Top100ByDate.objects.get(date=date)
+def get_top_100(search_date):
+    if Top100ByDate.objects.filter(date=search_date).exists():
+        data = Top100ByDate.objects.get(date=search_date)
         rank_with_title = ast.literal_eval(data.rank)#data.rank: 탑100 노래 이름
-
         rank_with_artist = data.rank_with_artist
         rank = []#rank: 탑100 json 형식 데이터
         if rank_with_artist is None:
-            print("데이터없음")#추가된 모델에 데이터를 추가한다.
+            print("추가된 모델에 데이터 없음")#추가된 모델에 데이터를 추가한다.
             saf = Spotify_audio_features()
 
             rank_with_artist = []
@@ -316,7 +316,7 @@ def get_top_100(date):
         #날짜 타입은 YYYY-MM-DD
         url = 'https://www.billboard.com/charts/hot-100/'
 
-        response = requests.get(f'{url}{date}')
+        response = requests.get(f'{url}{search_date}')
         response_html = response.text
 
 
@@ -384,7 +384,7 @@ def get_top_100(date):
             popularity += searched_data[0]["popularity"]
             rank.append(rank_data)
         
-        print(rank_data)
+        #print(rank_data)
         acousticness /= rank_amount
         danceability /= rank_amount
         energy /= rank_amount
@@ -399,7 +399,7 @@ def get_top_100(date):
         popularity = round(popularity/rank_amount)
         
         result = {
-            "date": date,
+            "date": search_date,
             "rank": rank,
             "averge_status": {
                 "acousticness" : acousticness,
@@ -418,7 +418,7 @@ def get_top_100(date):
             
         }
 
-        top_100_by_date = Top100ByDate(date=date, rank=top_100, acousticness=acousticness, danceability=danceability, 
+        top_100_by_date = Top100ByDate(date=search_date, rank=top_100, acousticness=acousticness, danceability=danceability, 
                                         energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode,
                                         speechiness=speechiness, instrumentalness=instrumentalness, tempo=tempo, 
                                         duration_ms=duration_ms, popularity=popularity, rank_with_artist=rank_with_artist,
@@ -428,46 +428,107 @@ def get_top_100(date):
 
         return result
 
-def data_mining(date):
-    date_to_int = date.split(sep='-')
-    date_to_int = list(map(int, date_to_int))
-    saf = Spotify_audio_features()
+#def get_top_100(start_date, end_date):
+    #a = 0
+def get_top_100_by_period(search_date, end_date, keyword=None):
+    start_date = search_date
+    datetime_search_date = date.fromisoformat(search_date)
+    datetime_end_date = date.fromisoformat(end_date) + datetime.timedelta(days=1)
+    period = (datetime_end_date - datetime_search_date).days
+    if period < 0:
+        search_date = end_date
+        end_date = start_date
+        start_date = search_date
+        datetime_search_date = date.fromisoformat(search_date)
+        datetime_end_date = date.fromisoformat(end_date) + datetime.timedelta(days=1)
+        period = (datetime_end_date - datetime_search_date).days
 
-    while date!="2022-10-08":
-        print(date)
-        get_top_100(date)
-        if date_to_int[0]%4 == 0 and date_to_int[1] == 2:
-            if date_to_int[2] == 29:
-                date_to_int[2] = 0
-                date_to_int[1] += 1
-            date_to_int[2] = date_to_int[2] + 1
-        elif date_to_int[1] == 2 and date_to_int[2] == 28:
-            date_to_int[2] = 1
-            date_to_int[1] += 1
-        elif date_to_int[2] == 30 and (date_to_int[1] == 4 or date_to_int[1] == 6
-                                or date_to_int[1] == 9 or date_to_int[1] == 11):
-            date_to_int[2] = 1
-            date_to_int[1] += 1
-        elif date_to_int[2] == 31:
-            date_to_int[2] = 1
-            date_to_int[1] += 1
+    acousticness = 0
+    danceability = 0
+    energy = 0
+    liveness = 0
+    loudness = 0
+    valence = 0
+    mode = 0
+    speechiness = 0
+    instrumentalness = 0
+    tempo = 0
+    duration_ms = 0
+    popularity = 0
+    while(datetime_search_date!=datetime_end_date):
+        print(search_date)
+        if Top100ByDate.objects.filter(date=search_date).exists():
+            data = Top100ByDate.objects.get(date=search_date)
+            acousticness += data.acousticness
+            danceability += data.danceability
+            energy += data.energy 
+            liveness += data.liveness 
+            loudness += data.loudness
+            valence += data.valence
+            mode += data.mode
+            speechiness += data.speechiness
+            instrumentalness += data.instrumentalness
+            tempo += data.tempo
+            duration_ms += data.duration_ms
+            popularity += data.popularity
         else:
-            date_to_int[2] = date_to_int[2] + 1
-
-        if date_to_int[1] == 13:
-            date_to_int[1] = 1
-            date_to_int[0] += 1
-
-        year = str(date_to_int[0])
-        month = str(date_to_int[1])
-        day = str(date_to_int[2])
-        if len(month) == 1:
-            month = "0" + month
-        if len(day) == 1:
-            day = "0" + day 
-
-        date = year + "-" + month + "-" + day
+            searched_data = get_top_100(search_date)
+            acousticness += searched_data["averge_status"]["acousticness"]
+            danceability += searched_data["averge_status"]["danceability"]
+            energy += searched_data["averge_status"]["energy"]
+            liveness += searched_data["averge_status"]["liveness"]
+            loudness += searched_data["averge_status"]["loudness"]
+            valence += searched_data["averge_status"]["valence"]
+            mode += searched_data["averge_status"]["mode"]
+            speechiness += searched_data["averge_status"]["speechiness"]
+            instrumentalness += searched_data["averge_status"]["instrumentalness"]
+            tempo += searched_data["averge_status"]["tempo"]
+            duration_ms += searched_data["averge_status"]["duration_ms"]
+            popularity += searched_data["averge_status"]["popularity"]
         
+        datetime_search_date += datetime.timedelta(days=1)
+        search_date = date.isoformat(datetime_search_date)
+    
+    acousticness /= period
+    danceability /= period
+    energy /= period
+    liveness /= period
+    loudness /= period
+    valence /= period
+    mode /= period
+    speechiness /= period
+    instrumentalness /= period
+    tempo /= period
+    duration_ms = round(duration_ms/period)
+    popularity = round(popularity/period)
+
+    result = {
+        "keyword": keyword,
+        "period": {
+            "start_date": start_date,
+            "end_date": end_date
+        },
+        "averge_status": {
+                "acousticness" : acousticness,
+                "danceability" : danceability,
+                "energy" : energy,
+                "liveness" : liveness,
+                "loudness" : loudness,
+                "valence" : valence,
+                "mode" : mode,
+                "speechiness": speechiness,
+                "instrumentalness": instrumentalness,
+                "tempo": tempo,
+                "duration_ms": duration_ms,
+                "popularity": popularity
+            }
+    }
+
+    return result
+    
+
+
+
 
 
 # 쓰지 않는 함수
@@ -521,3 +582,42 @@ def get_song_status(songtitle):
 
     return feat
 
+def data_mining(date):
+    date_to_int = date.split(sep='-')
+    date_to_int = list(map(int, date_to_int))
+    saf = Spotify_audio_features()
+
+    while date!="2022-10-30":
+        print(date)
+        get_top_100(date)
+        if date_to_int[0]%4 == 0 and date_to_int[1] == 2:
+            if date_to_int[2] == 29:
+                date_to_int[2] = 0
+                date_to_int[1] += 1
+            date_to_int[2] = date_to_int[2] + 1
+        elif date_to_int[1] == 2 and date_to_int[2] == 28:
+            date_to_int[2] = 1
+            date_to_int[1] += 1
+        elif date_to_int[2] == 30 and (date_to_int[1] == 4 or date_to_int[1] == 6
+                                or date_to_int[1] == 9 or date_to_int[1] == 11):
+            date_to_int[2] = 1
+            date_to_int[1] += 1
+        elif date_to_int[2] == 31:
+            date_to_int[2] = 1
+            date_to_int[1] += 1
+        else:
+            date_to_int[2] = date_to_int[2] + 1
+
+        if date_to_int[1] == 13:
+            date_to_int[1] = 1
+            date_to_int[0] += 1
+
+        year = str(date_to_int[0])
+        month = str(date_to_int[1])
+        day = str(date_to_int[2])
+        if len(month) == 1:
+            month = "0" + month
+        if len(day) == 1:
+            day = "0" + day 
+
+        date = year + "-" + month + "-" + day

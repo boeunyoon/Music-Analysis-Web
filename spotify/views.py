@@ -6,14 +6,14 @@ from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from django.http.response import HttpResponse
 from .models import Date, SearchTitle
-from .serializers import DateSerializer, SearchSerializer 
+from .serializers import DateSerializer, PeriodSerializer, SearchSerializer 
 import json
 from django.http import JsonResponse
 from .util import *
 from datetime import datetime
 
 
-# [ {"date": "2022-10-08"} ] / String 문자열 "2022-10-08"
+# [ {"date": "2022-10-08"} ] | url: /spotify/get-top-100
 @api_view(['POST'])
 def Post_Date_Back_Song_Title(request):
     if request.method == 'GET':
@@ -32,8 +32,6 @@ def Post_Date_Back_Song_Title(request):
             else:
                 print("검색 중")
                 top_100_data = get_top_100(date)
-                #data_mining(date)
-                #print(top_100_data)
                 top_100_json_data = json.dumps(top_100_data) #json 데이터로 변환
                 print("검색 성공")
                 return JsonResponse(top_100_json_data, safe=False)
@@ -41,7 +39,36 @@ def Post_Date_Back_Song_Title(request):
             #return Response(serializer.data ,status=200)
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
 
-# [ {"search": "Bad habits"} ] / String 문자열 "Bad habbits"
+# [ {"start_date": "2022-10-08", "end_date": "2022-10-09"} ] | url: /spotify/get-status-period
+@api_view(['POST'])
+def Post_Period_Back_AVG_STATUS(request):
+    if request.method == 'GET':
+        return HttpResponse(status=200)
+    if request.method == 'POST':
+        json_data=json.loads(request.body)
+        serializer = PeriodSerializer(data = request.data, many=True)
+        if(serializer.is_valid()):
+            start_date=json_data[0]['start_date']
+            end_date=json_data[0]['end_date']
+            datetime_format = "%Y-%m-%d"
+            try:
+                datetime.strptime(start_date, datetime_format)
+                datetime.strptime(end_date, datetime_format)
+            except:
+                print("잘못된 날짜입니다.")
+                return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
+            else:
+                print("검색 중")
+                avg_status_by_period_data = get_top_100_by_period(start_date, end_date)
+                avg_status_by_period_json_data = json.dumps(avg_status_by_period_data) #json 데이터로 변환
+                print(avg_status_by_period_data)
+                print("검색 성공")
+                return JsonResponse(avg_status_by_period_json_data, safe=False)
+            
+            #return Response(serializer.data ,status=200)
+        return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
+
+# [ {"search": "Bad habits"} ] | url: /spotify/search-song
 @api_view(['POST'])
 def Post_Title_Back_Song_Status(request):
     if request.method == 'GET':
