@@ -3,11 +3,8 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.renderers import JSONRenderer
 from django.http.response import HttpResponse
-from .models import Date, SearchTitle
-from .serializers import DateSerializer, PeriodSerializer, SearchSerializer 
-import json
+from .serializers import *
 from django.http import JsonResponse
 from .util import *
 from datetime import datetime
@@ -41,7 +38,7 @@ def Post_Date_Back_Song_Title(request):
 
 # [ {"start_date": "2022-10-08", "end_date": "2022-10-09"} ] | url: /spotify/get-status-period
 @api_view(['POST'])
-def Post_Period_Back_AVG_STATUS(request):
+def Post_Period_Back_Avg_STATUS(request):
     if request.method == 'GET':
         return HttpResponse(status=200)
     if request.method == 'POST':
@@ -66,6 +63,28 @@ def Post_Period_Back_AVG_STATUS(request):
                 return JsonResponse(avg_status_by_period_json_data, safe=False)
             
             #return Response(serializer.data ,status=200)
+        return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
+
+# [ {"keyword": "2022-10"} ] | url: /spotify/get-status-keyword
+@api_view(['POST'])
+def Post_Keyword_Back_Avg_STATUS(request):
+    if request.method == 'GET':
+        return HttpResponse(status=200)
+    if request.method == 'POST':
+        json_data=json.loads(request.body)
+        serializer = KeywordSerializer(data = request.data, many=True)
+        if(serializer.is_valid()):
+            keyword=json_data[0]['keyword']
+            searched_data = get_top_100_by_keyword(keyword)
+            #검색 결과가 없으면 None을 return 한다.
+            if searched_data is None: 
+                print("검색 실패")
+                return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
+            else:
+                searched_json_data = json.dumps(searched_data) #json 데이터로 변환
+                print("검색 성공")
+                return JsonResponse(searched_json_data, safe=False)
+
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
 
 # [ {"search": "Bad habits"} ] | url: /spotify/search-song

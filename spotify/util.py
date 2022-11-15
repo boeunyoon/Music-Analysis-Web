@@ -2,10 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from .models import MusicStatus, Top100ByDate, AlbumImage
+from .models import MusicStatus, Top100ByDate, AlbumImage, AnalysisByKeyword
 
 import datetime
 from datetime import date
+from dateutil.relativedelta import relativedelta
 import base64
 from urllib.parse import urlencode
 import ast
@@ -526,8 +527,92 @@ def get_top_100_by_period(search_date, end_date, keyword=None):
 
     return result
     
+def get_top_100_by_keyword(keyword):
+    keyword_to_date = keyword + "-01"
+    start_date = None
+    end_date = None
+    datetime_format = "%Y-%m-%d"
+    
+    try:
+        datetime.datetime.strptime(keyword_to_date, datetime_format)
+        start_date = keyword_to_date
+        datetime_end_date = date.fromisoformat(start_date) + relativedelta(months=1) - datetime.timedelta(days=1)
+        end_date = date.isoformat(datetime_end_date)
+        print(type(end_date))
+    except:
+        if keyword is None:
+            return None
+    
+    is_in_model = AnalysisByKeyword.objects.filter(keyword=keyword).exists()
+    
+    #키워드가 날짜이고 데이터베이스에 존재하지 않을 경우
+    if start_date is not None and is_in_model is False:
+        searched_data = get_top_100_by_period(start_date, end_date)
+        acousticness = searched_data["averge_status"]["acousticness"]
+        danceability = searched_data["averge_status"]["danceability"]
+        energy = searched_data["averge_status"]["energy"]
+        liveness = searched_data["averge_status"]["liveness"]
+        loudness = searched_data["averge_status"]["loudness"]
+        valence = searched_data["averge_status"]["valence"]
+        mode = searched_data["averge_status"]["mode"]
+        speechiness = searched_data["averge_status"]["speechiness"]
+        instrumentalness = searched_data["averge_status"]["instrumentalness"]
+        tempo = searched_data["averge_status"]["tempo"]
+        duration_ms = searched_data["averge_status"]["duration_ms"]
+        popularity = searched_data["averge_status"]["popularity"]
 
+        analysis_by_keword = AnalysisByKeyword(keyword=keyword, start_date=start_date, end_date=end_date, acousticness=acousticness, 
+                                        danceability=danceability, energy=energy, liveness=liveness, loudness=loudness, 
+                                        valence=valence, mode=mode, speechiness=speechiness, instrumentalness=instrumentalness, 
+                                        tempo=tempo, duration_ms=duration_ms, popularity=popularity)
+        analysis_by_keword.save()
+    
+    elif is_in_model is True:
+        data = AnalysisByKeyword.objects.get(keyword=keyword)
+        start_date = data.start_date
+        end_date = data.end_date
+        acousticness = data.acousticness
+        danceability = data.danceability
+        energy = data.energy
+        liveness = data.liveness
+        loudness = data.loudness
+        valence = data.valence
+        mode = data.mode
+        speechiness = data.speechiness
+        instrumentalness = data.instrumentalness
+        tempo = data.tempo
+        duration_ms = data.duration_ms
+        popularity = data.popularity
+    #데이터 검색 안됨
+    else:
+        return None
 
+    result = {
+        "keyword": keyword,
+        "period": {
+            "start_date": start_date,
+            "end_date": end_date
+        },
+        "averge_status": {
+                "acousticness" : acousticness,
+                "danceability" : danceability,
+                "energy" : energy,
+                "liveness" : liveness,
+                "loudness" : loudness,
+                "valence" : valence,
+                "mode" : mode,
+                "speechiness": speechiness,
+                "instrumentalness": instrumentalness,
+                "tempo": tempo,
+                "duration_ms": duration_ms,
+                "popularity": popularity
+            }
+    }
+
+    return result
+
+        
+    
 
 
 

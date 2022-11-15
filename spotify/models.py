@@ -9,6 +9,9 @@ class Period(models.Model):
     start_date = models.CharField(max_length=10)
     end_date = models.CharField(max_length=10)
 
+class Keyword(models.Model):
+    keyword = models.TextField()
+
 class Top100ByDate(models.Model):
     date = models.CharField(max_length=10, primary_key=True)
     rank = models.TextField()
