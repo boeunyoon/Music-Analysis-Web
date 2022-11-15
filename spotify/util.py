@@ -130,6 +130,8 @@ class Spotify_audio_features:
 
             if MusicStatus.objects.filter(track_id=track_id).exists():
                 data = MusicStatus.objects.get(track_id=track_id)
+
+                # MusicStatus 모델에 추가된 artist_id를 업데이트한다.
                 if data.artist_id is None:
                     artist_id= track_info["tracks"]["items"][i]["artists"][0]["id"]
                     data.artist_id=artist_id
@@ -258,7 +260,6 @@ class Spotify_audio_features:
             }
             return_data.append(result)
         
-        print(return_data)
         return return_data
 
     def get_top(self):
@@ -272,7 +273,7 @@ def get_top_100(search_date):
         rank_with_artist = data.rank_with_artist
         rank = []#rank: 탑100 json 형식 데이터
         if rank_with_artist is None:
-            print("추가된 모델에 데이터 없음")#추가된 모델에 데이터를 추가한다.
+            print("Top100ByDate 모델에 추가된 테이블에 데이터 없음")#추가된 테이블에 데이터를 추가한다.
             saf = Spotify_audio_features()
 
             rank_with_artist = []
@@ -560,7 +561,6 @@ def get_top_100_by_keyword(keyword):
         start_date = keyword_to_date
         datetime_end_date = date.fromisoformat(start_date) + relativedelta(months=1) - datetime.timedelta(days=1)
         end_date = date.isoformat(datetime_end_date)
-        print(type(end_date))
     except:
         if keyword is None:
             return None
