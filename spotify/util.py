@@ -116,7 +116,6 @@ class Spotify_audio_features:
 
         for i in range(0, json_length):
             track_id = track_info["tracks"]["items"][i]["id"]
-        
 
             if AlbumImage.objects.filter(track_id=track_id).exists():
                 img_data = AlbumImage.objects.get(track_id=track_id)
@@ -131,10 +130,15 @@ class Spotify_audio_features:
 
             if MusicStatus.objects.filter(track_id=track_id).exists():
                 data = MusicStatus.objects.get(track_id=track_id)
+                if data.artist_id is None:
+                    artist_id= track_info["tracks"]["items"][i]["artists"][0]["id"]
+                    data.artist_id=artist_id
+                    data.save()
 
                 result = {"track_id" : data.track_id,
                             "title" : data.title,
                             "artist" : data.artist,
+                            "artist_id": data.artist_id,
                             "acousticness" : data.acousticness,
                             "danceability" : data.danceability,
                             "energy" : data.energy,
@@ -169,6 +173,7 @@ class Spotify_audio_features:
             else:
                 title = track_info["tracks"]["items"][i]["name"]
                 artist = track_info["tracks"]["items"][i]["artists"][0]["name"]
+                artist_id= track_info["tracks"]["items"][i]["artists"][0]["id"]
                 # get audio_feature
                 features = self.sp.audio_features(tracks=[track_id])
                 if features[0] == None:
@@ -201,6 +206,7 @@ class Spotify_audio_features:
                 result = {"track_id" : track_id,
                             "title": title,
                             "artist": artist,
+                            "artist_id": artist_id,
                             "acousticness" : acousticness,
                             "danceability" : danceability,
                             "energy" : energy,
@@ -231,14 +237,30 @@ class Spotify_audio_features:
                                     }
                                 ]
                             }
-                music_status = MusicStatus(track_id=track_id, title=title, artist=artist, acousticness=acousticness,
-                danceability=danceability, energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode,
-                speechiness=speechiness, instrumentalness=instrumentalness, tempo=tempo, duration_ms=duration_ms, 
-                popularity=popularity)
+
+                music_status = MusicStatus(track_id=track_id, title=title, artist=artist, artist_id = artist_id, 
+                acousticness=acousticness, danceability=danceability, energy=energy, liveness=liveness, loudness=loudness, 
+                valence=valence, mode=mode, speechiness=speechiness, instrumentalness=instrumentalness, tempo=tempo,
+                duration_ms=duration_ms, popularity=popularity)
                 music_status.save()
                 return_data.append(result)
         
         return return_data
+
+    def get_recommendation(self, track_id, artist_id , genre='pop', limit=10):
+        recommendations_info = self.sp.recommendations(seed_artist=[artist_id], seed_genres=[genre], 
+                                seed_tacks=[track_id], country=["US"] ,limit=limit)
+        return_data = []
+        for i in range(0, limit):
+            result = {
+                "title": recommendations_info["tracks"][i]["name"],
+                "artist": recommendations_info["tracks"][i]["artists"][0]["name"]
+            }
+            return_data.append(result)
+        
+        print(return_data)
+        return return_data
+
     def get_top(self):
         self.sp.current_user_top_tracks(20, 0, 'medium_term')
     

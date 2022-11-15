@@ -87,6 +87,31 @@ def Post_Keyword_Back_Avg_STATUS(request):
 
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
 
+# [ {"track_id": "3rmo8F54jFF8OgYsqTxm5d", "artist_id": "6eUKZXaKkcviH0Ku9w2n3V", "genre": "pop"} ] | url: /spotify/get-recommendation
+@api_view(['POST'])
+def Post_Track_Back_Recommendation(request):
+    if request.method == 'GET':
+        return HttpResponse(status=200)
+    if request.method == 'POST':
+        json_data=json.loads(request.body)
+        serializer = RecommendationSerializer(data = request.data, many=True)
+        if(serializer.is_valid()):
+            track_id=json_data[0]['track_id']
+            artist_id=json_data[0]['artist_id']
+            genre=json_data[0]['genre']
+            saf = Spotify_audio_features()
+            searched_data = saf.get_recommendation(track_id=track_id, artist_id=artist_id, genre=genre)
+            #검색 결과가 없으면 None을 return 한다.
+            if searched_data is None: 
+                print("검색 실패")
+                return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
+            else:
+                searched_json_data = json.dumps(searched_data) #json 데이터로 변환
+                print("검색 성공")
+                return JsonResponse(searched_json_data, safe=False)
+
+        return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
+
 # [ {"search": "Bad habits"} ] | url: /spotify/search-song
 @api_view(['POST'])
 def Post_Title_Back_Song_Status(request):

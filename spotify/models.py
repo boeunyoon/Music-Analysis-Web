@@ -12,6 +12,11 @@ class Period(models.Model):
 class Keyword(models.Model):
     keyword = models.TextField()
 
+class Recommendation(models.Model):
+    track_id = models.TextField()
+    artist_id = models.TextField()
+    genre = models.TextField(default = None, null=True)
+
 class Top100ByDate(models.Model):
     date = models.CharField(max_length=10, primary_key=True)
     rank = models.TextField()
@@ -72,6 +77,7 @@ class MusicStatus(models.Model):
     track_id = models.TextField(primary_key=True)
     title = models.TextField()
     artist = models.TextField()
+    artist_id = models.TextField(null=True)
     acousticness = models.FloatField(null=True) 
     danceability = models.FloatField(null=True)
     energy = models.FloatField(null=True)

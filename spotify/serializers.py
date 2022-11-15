@@ -1,7 +1,7 @@
 from dataclasses import field
 from datetime import date
 from rest_framework import serializers
-from .models import Date, Period, MusicStatus, SearchTitle, Top100ByDate, AlbumImage, Keyword
+from .models import *
 
 class DateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +17,11 @@ class KeywordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Keyword
         fields = '__all__'
+
+class RecommendationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recommendation
+        fields = '__all__'        
 
 class Top100ByDateSerializer(serializers.ModelSerializer):
     class Meta:
