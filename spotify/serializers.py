@@ -42,3 +42,13 @@ class MusicStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = MusicStatus
         fields = '__all__'
+
+class ArtistInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArtistInfo
+        fields = '__all__'
+
+class ArtistTopTracksSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArtistTopTracks
+        fields = '__all__'

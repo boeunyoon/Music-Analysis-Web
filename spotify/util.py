@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from .models import MusicStatus, Top100ByDate, AlbumImage, AnalysisByKeyword
+from .models import *
 
 import datetime
 from datetime import date
@@ -261,9 +261,231 @@ class Spotify_audio_features:
             return_data.append(result)
         
         return return_data
+    
+    def get_artist_info(self, artist, limit=5):
+        artist_info = self.sp.search(q=artist, type='artist',limit=limit, market='US')
+        #print(artist_info['artists']['items'][0])
+        length = len(artist_info['artists']['items'])
 
-    def get_top(self):
-        self.sp.current_user_top_tracks(20, 0, 'medium_term')
+        return_data = []
+        for i in range(0, length):
+            #아티스트 정보
+            artist_id = artist_info['artists']['items'][i]['id']
+
+            if ArtistInfo.objects.filter(artist_id=artist_id).exists():
+                data = ArtistInfo.objects.get(artist_id=artist_id)
+                artist_name = data.artist
+                followers = data.followers
+                genres = ast.literal_eval(data.genres)
+                artist_img640 = data.img640
+                artist_img300 = data.img300
+                artist_img64 = data.img64
+                popularity = data.popularity
+                related_artists = ast.literal_eval(data.related_artists)
+            else:
+                artist_name = artist_info['artists']['items'][i]['name']
+                #print(artist_name)
+                followers = artist_info['artists']['items'][i]['followers']['total']
+                genres = artist_info['artists']['items'][i]['genres']
+                #print(artist_info['artists']['items'][i]['images'])
+                if artist_info['artists']['items'][i]['images']:
+                    artist_img640 = artist_info['artists']['items'][i]['images'][0]['url']
+                    artist_img300 = artist_info['artists']['items'][i]['images'][1]['url']
+                    artist_img64 = artist_info['artists']['items'][i]['images'][2]['url']
+                popularity = artist_info['artists']['items'][i]['popularity']
+
+                related_artists_info = self.sp.artist_related_artists(artist_id)
+                related_artists = []
+                for j in range(0, len(related_artists_info['artists'])): #5개보다 적을 경우를 대비
+                    if j == 5:
+                        #print(len(related_artists))#5개인지 확인
+                        break
+                    related_artists_id = related_artists_info['artists'][j]['id']
+                    related_artists_name = related_artists_info['artists'][j]['name']
+                    related_data = {
+                        "id": related_artists_id,
+                        "name": related_artists_name
+                    }
+                    related_artists.append(related_data)
+                save_artist_info = ArtistInfo(artist_id=artist_id, artist=artist_name, followers=followers,
+                                            genres=genres, img640=artist_img640, img300=artist_img300, img64=artist_img64, 
+                                            popularity=popularity, related_artists=related_artists)
+                save_artist_info.save()
+            
+            #탑트랙 정보
+            if ArtistTopTracks.objects.filter(artist_id=artist_id).exists():
+                data = ArtistTopTracks.objects.get(artist_id=artist_id)
+                top_tracks = ast.literal_eval(data.top_tracks)
+                avg_acousticness = data.acousticness
+                avg_danceability = data.danceability
+                avg_energy = data.energy
+                avg_liveness = data.liveness
+                avg_loudness = data.loudness
+                avg_valence = data.valence
+                avg_mode = data.mode
+                avg_speechiness = data.speechiness
+                avg_instrumentalness = data.instrumentalness
+                avg_tempo = data.tempo
+                avg_duration_ms = data.duration_ms
+                avg_popularity = data.popularity
+            else:
+                avg_acousticness = avg_danceability = avg_energy = avg_liveness = avg_loudness = avg_valence = 0
+                avg_mode = avg_speechiness = avg_instrumentalness = avg_tempo = avg_duration_ms = avg_popularity = 0
+                artist_top_tracks_info = self.sp.artist_top_tracks(artist_id=artist_id, country='US')
+                top_tracks = []
+                top_tracks_len = len(artist_top_tracks_info['tracks'])
+                for j in range(0, top_tracks_len):
+                    if j == 5:
+                        #print(len(artist_top_tracks_info['tracks']))#5개인지 확인
+                        top_tracks_len = 5
+                        break
+                    track_id = artist_top_tracks_info['tracks'][j]['id']
+                    title = artist_top_tracks_info['tracks'][j]['name']
+                    features = self.sp.audio_features(tracks=[track_id])
+                    acousticness = features[0]["acousticness"]
+                    danceability = features[0]["danceability"]
+                    energy = features[0]["energy"]
+                    liveness = features[0]["liveness"]
+                    loudness = features[0]["loudness"]
+                    valence = features[0]["valence"]
+                    mode = features[0]["mode"]
+                    speechiness = features[0]["speechiness"]
+                    instrumentalness = features[0]["instrumentalness"]
+                    tempo = features[0]["tempo"]
+                    duration_ms = features[0]["duration_ms"]
+                    popularity = artist_top_tracks_info["tracks"][j]["popularity"]
+                    if not MusicStatus.objects.filter(track_id=track_id).exists():
+                        music_status = MusicStatus(track_id=track_id, title=title, artist=artist_name, artist_id = artist_id, 
+                        acousticness=acousticness, danceability=danceability, energy=energy, liveness=liveness, loudness=loudness, 
+                        valence=valence, mode=mode, speechiness=speechiness, instrumentalness=instrumentalness, tempo=tempo,
+                        duration_ms=duration_ms, popularity=popularity)
+                        music_status.save()
+
+                    img640 = artist_top_tracks_info["tracks"][j]['album']["images"][0]['url']
+                    img300 = artist_top_tracks_info["tracks"][j]['album']["images"][1]['url']
+                    img64 = artist_top_tracks_info["tracks"][j]['album']["images"][2]['url']
+                    if not AlbumImage.objects.filter(track_id=track_id).exists():
+                        album_image = AlbumImage(track_id=track_id, title=title, artist=artist_name,
+                                        img640=img640, img300=img300, img64=img64)
+                        album_image.save()
+
+                    avg_acousticness += acousticness
+                    avg_danceability += danceability
+                    avg_energy += energy
+                    avg_liveness += liveness
+                    avg_loudness += loudness
+                    avg_valence += valence
+                    avg_mode += mode
+                    avg_speechiness += speechiness
+                    avg_instrumentalness += instrumentalness
+                    avg_tempo += tempo
+                    avg_duration_ms += duration_ms
+                    avg_popularity += popularity
+
+                    top_tracks_data = {
+                        "track_id" : track_id,
+                        "title": title,
+                        "acousticness" : acousticness,
+                        "danceability" : danceability,
+                        "energy" : energy,
+                        "liveness" : liveness,
+                        "loudness" : loudness,
+                        "valence" : valence,
+                        "mode" : mode,
+                        "speechiness": speechiness,
+                        "instrumentalness": instrumentalness,
+                        "tempo": tempo,
+                        "duration_ms": duration_ms,
+                        "popularity": popularity,
+                        "images":[
+                                {
+                                "height":640,
+                                "url":img640,
+                                "width":640
+                                },
+                                {
+                                "height":300,
+                                "url":img300,
+                                "width":300
+                                },
+                                {
+                                "height":64,
+                                "url":img64,
+                                "width":64
+                                }
+                            ]
+                    }
+                    top_tracks.append(top_tracks_data)
+                if top_tracks_len > 0:
+                    avg_acousticness /= top_tracks_len
+                    avg_danceability /= top_tracks_len
+                    avg_energy /= top_tracks_len
+                    avg_liveness /= top_tracks_len
+                    avg_loudness /= top_tracks_len
+                    avg_valence /= top_tracks_len
+                    avg_mode /= top_tracks_len
+                    avg_speechiness /= top_tracks_len
+                    avg_instrumentalness /= top_tracks_len
+                    avg_tempo /= top_tracks_len
+                    avg_duration_ms /= top_tracks_len
+                    avg_popularity /= top_tracks_len
+                
+                save_artist_top_tracks = ArtistTopTracks(artist_id=artist_id, top_tracks=top_tracks, acousticness=avg_acousticness, 
+                                                danceability=avg_danceability, energy=avg_energy, liveness=avg_liveness, 
+                                                loudness=avg_loudness, valence=avg_valence, mode=avg_mode, speechiness=avg_speechiness, 
+                                                instrumentalness=avg_instrumentalness, tempo=avg_tempo, duration_ms=avg_duration_ms, 
+                                                popularity=avg_popularity)
+                save_artist_top_tracks.save()
+
+
+            result = {
+                "artists": {
+                    "id": artist_id,
+                    "name": artist_name,
+                    "followers": followers,
+                    "genres": genres,
+                    "popularity": popularity,
+                    "images":[
+                                {
+                                "height":640,
+                                "url":artist_img640,
+                                "width":640
+                                },
+                                {
+                                "height":300,
+                                "url":artist_img300,
+                                "width":300
+                                },
+                                {
+                                "height":64,
+                                "url":artist_img64,
+                                "width":64
+                                }
+                        ]
+                },
+                "related_artists": related_artists,
+                "top_tracks": {
+                    "items": top_tracks,
+                    "average_status": {
+                        "acousticness" : avg_acousticness,
+                        "danceability" : avg_danceability,
+                        "energy" : avg_energy,
+                        "liveness" : avg_liveness,
+                        "loudness" : avg_loudness,
+                        "valence" : avg_valence,
+                        "mode" : avg_mode,
+                        "speechiness": avg_speechiness,
+                        "instrumentalness": avg_instrumentalness,
+                        "tempo": avg_tempo,
+                        "duration_ms": avg_duration_ms,
+                        "popularity": avg_popularity,
+                    }
+                }
+            }
+
+            return_data.append(result)
+        
+        return return_data
     
 
 def get_top_100(search_date):
@@ -358,18 +580,8 @@ def get_top_100(search_date):
 
         #평균 스탯을 계산한다.
         saf = Spotify_audio_features()
-        acousticness = 0
-        danceability = 0
-        energy = 0
-        liveness = 0
-        loudness = 0
-        valence = 0
-        mode = 0
-        speechiness = 0
-        instrumentalness = 0
-        tempo = 0
-        duration_ms = 0
-        popularity = 0
+        acousticness = danceability = energy = liveness = loudness = valence = 0
+        mode = speechiness = instrumentalness = tempo = duration_ms = popularity = 0
 
         rank_amount = 100
         rank = []
@@ -452,8 +664,7 @@ def get_top_100(search_date):
 
         return result
 
-#def get_top_100(start_date, end_date):
-    #a = 0
+
 def get_top_100_by_period(search_date, end_date, keyword=None):
     start_date = search_date
     datetime_search_date = date.fromisoformat(search_date)
@@ -467,18 +678,8 @@ def get_top_100_by_period(search_date, end_date, keyword=None):
         datetime_end_date = date.fromisoformat(end_date) + datetime.timedelta(days=1)
         period = (datetime_end_date - datetime_search_date).days
 
-    acousticness = 0
-    danceability = 0
-    energy = 0
-    liveness = 0
-    loudness = 0
-    valence = 0
-    mode = 0
-    speechiness = 0
-    instrumentalness = 0
-    tempo = 0
-    duration_ms = 0
-    popularity = 0
+    acousticness = danceability = energy = liveness = loudness = valence = 0
+    mode = speechiness = instrumentalness = tempo = duration_ms = popularity = 0
     while(datetime_search_date!=datetime_end_date):
         print(search_date)
         if Top100ByDate.objects.filter(date=search_date).exists():
@@ -633,8 +834,7 @@ def get_top_100_by_keyword(keyword):
 
     return result
 
-        
-    
+          
 
 
 

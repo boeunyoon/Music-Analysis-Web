@@ -135,12 +135,40 @@ def Post_Title_Back_Song_Status(request):
             if searched_data == None: 
                 print("스탯 검색 실패")
                 return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
-
             else:
                 searched_json_data = json.dumps(searched_data) #json 데이터로 변환
                 print("스탯 검색 성공")
                 #print(searched_json_data)
                 #print(searched_data[0]["images"][0])
+                return JsonResponse(searched_json_data, safe=False)
+
+            
+        return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
+
+# 아티스트 검색
+# [ {"search": "Ed Sheeran"} ] | url: /spotify/search-artist
+@api_view(['POST'])
+def Post_Artist_Back_Info(request):
+    if request.method == 'GET':
+        return HttpResponse(status=200)
+    if request.method == 'POST':
+        json_data=json.loads(request.body)
+        serializer = SearchSerializer(data = request.data, many=True)
+        if(serializer.is_valid()):
+            search=json_data[0]['search']
+            print("검색어: ", search)
+            saf = Spotify_audio_features()
+            searched_data = saf.get_artist_info(search) #데이터 검색
+            
+            #검색 결과가 없으면 None을 return 한다.
+            if searched_data == None: 
+                print("스탯 검색 실패")
+                return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
+
+            else:
+                searched_json_data = json.dumps(searched_data) #json 데이터로 변환
+                print("스탯 검색 성공")
+                #print(searched_data)
                 return JsonResponse(searched_json_data, safe=False)
 
             
