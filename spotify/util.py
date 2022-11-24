@@ -3,7 +3,8 @@ from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from .models import *
-
+from django.core import serializers
+from django.db.models import Q
 import datetime
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -834,7 +835,17 @@ def get_top_100_by_keyword(keyword):
 
     return result
 
-          
+def search_status_by_scope():
+    data = MusicStatus.objects.filter(Q(energy__range=(0.85, 0.9)) & Q(acousticness__range=(0.01, 0.02)))
+    data_list = serializers.serialize('json', data)
+    print(data_list)
+
+
+
+
+
+
+
 
 
 

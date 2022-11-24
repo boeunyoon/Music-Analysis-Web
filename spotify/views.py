@@ -130,7 +130,7 @@ def Post_Title_Back_Song_Status(request):
             print("검색어: ", search)
             saf = Spotify_audio_features()
             searched_data = saf.get_features(search, limit=5) #데이터 검색
-            
+            search_status_by_scope()
             #검색 결과가 없으면 None을 return 한다.
             if searched_data == None: 
                 print("스탯 검색 실패")
