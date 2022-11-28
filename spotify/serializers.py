@@ -18,6 +18,11 @@ class KeywordSerializer(serializers.ModelSerializer):
         model = Keyword
         fields = '__all__'
 
+class StatusInputSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StatusInput
+        fields = '__all__'
+
 class RecommendationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recommendation

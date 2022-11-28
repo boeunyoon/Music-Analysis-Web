@@ -130,7 +130,8 @@ def Post_Title_Back_Song_Status(request):
             print("검색어: ", search)
             saf = Spotify_audio_features()
             searched_data = saf.get_features(search, limit=5) #데이터 검색
-            search_status_by_scope()
+            ex = [{'name': 'loudness', 'input': 0.5}]
+            print(search_status_by_input(ex))
             #검색 결과가 없으면 None을 return 한다.
             if searched_data == None: 
                 print("스탯 검색 실패")
@@ -172,4 +173,27 @@ def Post_Artist_Back_Info(request):
                 return JsonResponse(searched_json_data, safe=False)
 
             
+        return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
+
+# 스탯 근사치 찾기
+# [ {"name": "energy", "input": 0.5} ] | url: /spotify/get-approximation
+@api_view(['POST'])
+def Post_Status_Back_Approximation(request):
+    if request.method == 'GET':
+        return HttpResponse(status=200)
+    if request.method == 'POST':
+        json_data=json.loads(request.body)
+        serializer = StatusInputSerializer(data = request.data, many=True)
+        if(serializer.is_valid()):
+            searched_data = search_status_by_input(json_data)
+            #검색 결과가 없으면 None을 return 한다.
+            if searched_data is None: 
+                print("근사치 찾지 못함")
+                return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
+            else:
+                searched_json_data = json.dumps(searched_data) #json 데이터로 변환
+                print("근사치 찾기 성공")
+                #print(searched_data)
+                return JsonResponse(searched_json_data, safe=False)
+
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)

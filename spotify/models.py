@@ -12,6 +12,10 @@ class Period(models.Model):
 class Keyword(models.Model):
     keyword = models.TextField()
 
+class StatusInput(models.Model):
+    name = models.TextField()
+    input = models.FloatField()
+
 class Recommendation(models.Model):
     track_id = models.TextField()
     artist_id = models.TextField()

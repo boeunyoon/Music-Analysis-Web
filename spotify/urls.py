@@ -8,4 +8,5 @@ urlpatterns = [
     path('get-status-period', views.Post_Period_Back_Avg_STATUS),
     path('get-status-keyword', views.Post_Keyword_Back_Avg_STATUS),
     path('get-recommendation', views.Post_Track_Back_Recommendation),
+    path('get-approximation', views.Post_Status_Back_Approximation),
 ] 
