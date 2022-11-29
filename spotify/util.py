@@ -835,123 +835,114 @@ def get_top_100_by_keyword(keyword):
 
     return result
 
-def search_status_by_input(search):
-    
-    name = search[0]['name']
-    input = search[0]['input']
-    if name == 'acousticness':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(acousticness__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(acousticness__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(acousticness__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'danceability':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(danceability__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(danceability__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(danceability__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'energy':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(energy__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(energy__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(energy__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'liveness':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(liveness__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(liveness__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(liveness__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'loudness':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(loudness__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(loudness__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(loudness__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'valence':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(valence__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(valence__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(valence__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'mode':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(mode__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(mode__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(mode__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'speechiness':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(speechiness__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(speechiness__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(speechiness__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'instrumentalness':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(instrumentalness__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(instrumentalness__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(instrumentalness__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'tempo':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(tempo__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(tempo__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(tempo__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'duration_ms':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(duration_ms__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(duration_ms__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(duration_ms__lt=(input))).order_by('-' + name)))[:10]
-    elif name == 'popularity':
-        greater = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(popularity__gt=(input))).order_by(name)))[:10]
-        equal = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(popularity__exact=(input)))))[:10]
-        less = json.loads(serializers.serialize('json', 
-                MusicStatus.objects.filter(Q(popularity__lt=(input))).order_by('-' + name)))[:10]
-    else:
-        return None
 
+class Approximate_MusicStatus:
+    def __init__(self, name='', input=0.0, number=0):
+        self.name = name
+        self.input = input
+        self.number = number
 
-    approximation_gap = []
-    for i in range(0, len(greater)):
-        gap = greater[i]['fields'][name] - input
-        ap_gap = {'type': 'gt', 'gap': gap, 'index': i}
-        approximation_gap.append(ap_gap)
-    for i in range(0, len(less)):
-        gap = less[i]['fields'][name] - input
-        gap *=-1
-        ap_gap = {'type': 'lt', 'gap': gap, 'index': i}
-        approximation_gap.append(ap_gap)
+    def approximate_status_by_input(self, search):
+        
+        self.name = search[0]['name']
+        self.input = search[0]['input']
+        length = len(search)
+        self.number = 10 + 10 * (length - 1)
 
-    sorted_approximation_gap = sorted(approximation_gap, key = lambda x: x['gap'])[:10-len(equal)]
-
-    result = []
-    result.extend(equal)
-    for i in range(0, 10-len(equal)):
-        index = sorted_approximation_gap[i]['index']
-        if sorted_approximation_gap[i]['type'] == 'gt': 
-            result.append(greater[index])
+        if self.name == 'acousticness':
+            greater = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(acousticness__gt=(self.input))).order_by(self.name)))[:self.number]
+            equal = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(acousticness__exact=(self.input)))))[:self.number]
+            less = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(acousticness__lt=(self.input))).order_by('-' + self.name)))[:self.number]
+        elif self.name == 'danceability':
+            greater = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(danceability__gt=(self.input))).order_by(self.name)))[:self.number]
+            equal = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(danceability__exact=(self.input)))))[:self.number]
+            less = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(danceability__lt=(self.input))).order_by('-' + self.name)))[:self.number]
+        elif self.name == 'energy':
+            greater = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(energy__gt=(self.input))).order_by(self.name)))[:self.number]
+            equal = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(energy__exact=(self.input)))))[:self.number]
+            less = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(energy__lt=(self.input))).order_by('-' + self.name)))[:self.number]
+        elif self.name == 'liveness':
+            greater = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(liveness__gt=(self.input))).order_by(self.name)))[:self.number]
+            equal = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(liveness__exact=(self.input)))))[:self.number]
+            less = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(liveness__lt=(self.input))).order_by('-' + self.name)))[:self.number]
+        elif self.name == 'valence':
+            greater = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(valence__gt=(self.input))).order_by(self.name)))[:self.number]
+            equal = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(valence__exact=(self.input)))))[:self.number]
+            less = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(valence__lt=(self.input))).order_by('-' + self.name)))[:self.number]
+        elif self.name == 'speechiness':
+            greater = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(speechiness__gt=(self.input))).order_by(self.name)))[:self.number]
+            equal = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(speechiness__exact=(self.input)))))[:self.number]
+            less = json.loads(serializers.serialize('json', 
+                    MusicStatus.objects.filter(Q(speechiness__lt=(self.input))).order_by('-' + self.name)))[:self.number]
         else:
-            result.append(less[index])
+            return None
 
-    return result
+        result = self.get_approximate(greater, equal, less)
 
+        
+        for i in range(1, length):
+            self.name = search[i]['name']
+            self.input = search[i]['input']
+            self.number -= 10
+            result = self.approximate_status_by_data(result)
+            
+        #print(result)
+        return result
 
+    def get_approximate(self, greater, equal, less):
+        approximation_gap = []
+        for i in range(0, len(greater)):
+            gap = greater[i]['fields'][self.name] - self.input
+            ap_gap = {'type': 'gt', 'gap': gap, 'index': i}
+            approximation_gap.append(ap_gap)
+        for i in range(0, len(less)):
+            gap = less[i]['fields'][self.name] - self.input
+            gap *=-1
+            ap_gap = {'type': 'lt', 'gap': gap, 'index': i}
+            approximation_gap.append(ap_gap)
+
+        sorted_approximation_gap = sorted(approximation_gap, key = lambda x: x['gap'])[:self.number-len(equal)]
+        result = []
+        result.extend(equal)
+        for i in range(0, self.number-len(equal)):
+            index = sorted_approximation_gap[i]['index']
+            if sorted_approximation_gap[i]['type'] == 'gt':
+                result.append(greater[index])
+            else:
+                result.append(less[index])
+
+        return result
+
+    def approximate_status_by_data(self, data):
+        greater = sorted([x for x in data if x['fields'][self.name] > self.input],
+                            key = lambda x: x['fields'][self.name])[:self.number]
+        equal = [x for x in data if x['fields'][self.name] == self.input][:self.number]
+        less = sorted([x for x in data if x['fields'][self.name] < self.input],
+                            key = lambda x: x['fields'][self.name], reverse=True)[:self.number]
+        
+        return self.get_approximate(greater, equal, less)
+
+    
+
+def isGreaterThan(i, data, search):
+    return data[i]['fields'][search['name']] > search['input']
 
 
 

@@ -31,6 +31,7 @@ def Post_Date_Back_Song_Title(request):
                 top_100_data = get_top_100(date)
                 top_100_json_data = json.dumps(top_100_data) #json 데이터로 변환
                 print("검색 성공")
+                #print(top_100_json_data)
                 return JsonResponse(top_100_json_data, safe=False)
             
             #return Response(serializer.data ,status=200)
@@ -130,8 +131,6 @@ def Post_Title_Back_Song_Status(request):
             print("검색어: ", search)
             saf = Spotify_audio_features()
             searched_data = saf.get_features(search, limit=5) #데이터 검색
-            ex = [{'name': 'loudness', 'input': 0.5}]
-            print(search_status_by_input(ex))
             #검색 결과가 없으면 None을 return 한다.
             if searched_data == None: 
                 print("스탯 검색 실패")
@@ -176,7 +175,7 @@ def Post_Artist_Back_Info(request):
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
 
 # 스탯 근사치 찾기
-# [ {"name": "energy", "input": 0.5} ] | url: /spotify/get-approximation
+# [ {"name": "energy", "input": 0.5},  {"name": "valence", "input": 0.1} ] | url: /spotify/get-approximation
 @api_view(['POST'])
 def Post_Status_Back_Approximation(request):
     if request.method == 'GET':
@@ -185,7 +184,8 @@ def Post_Status_Back_Approximation(request):
         json_data=json.loads(request.body)
         serializer = StatusInputSerializer(data = request.data, many=True)
         if(serializer.is_valid()):
-            searched_data = search_status_by_input(json_data)
+            apr = Approximate_MusicStatus()
+            searched_data = apr.approximate_status_by_input(json_data)
             #검색 결과가 없으면 None을 return 한다.
             if searched_data is None: 
                 print("근사치 찾지 못함")
