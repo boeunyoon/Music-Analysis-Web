@@ -58,7 +58,7 @@ def Post_Period_Back_Avg_STATUS(request):
                 return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
             else:
                 print("특정기간 스탯평균 검색 중")
-                avg_status_by_period_data = get_top_100_by_period(start_date, end_date)
+                avg_status_by_period_data = get_top_100_by_period(start_date, end_date, keyword="Before COVID-19")
                 avg_status_by_period_json_data = json.dumps(avg_status_by_period_data) #json 데이터로 변환
                 #print(avg_status_by_period_data)
                 print("검색 성공")
@@ -175,7 +175,8 @@ def Post_Artist_Back_Info(request):
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
 
 # 스탯 근사치 찾기
-# [ {"name": "energy", "input": 0.5},  {"name": "valence", "input": 0.1} ] | url: /spotify/get-approximation
+# [ {"name": "acousticness", "input": 0.5},  {"name": "danceability", "input": 0.5},  {"name": "energy", "input": 0.5},  {"name": "liveness", "input": 0.5},  {"name": "valence", "input": 0.5},  {"name": "speechiness", "input": 0.5} ] 
+# url: /spotify/get-approximation
 @api_view(['POST'])
 def Post_Status_Back_Approximation(request):
     if request.method == 'GET':
@@ -186,6 +187,7 @@ def Post_Status_Back_Approximation(request):
         if(serializer.is_valid()):
             apr = Approximate_MusicStatus()
             searched_data = apr.approximate_status_by_input(json_data)
+            
             #검색 결과가 없으면 None을 return 한다.
             if searched_data is None: 
                 print("근사치 찾지 못함")
