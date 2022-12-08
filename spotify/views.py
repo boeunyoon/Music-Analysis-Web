@@ -58,7 +58,7 @@ def Post_Period_Back_Avg_STATUS(request):
                 return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
             else:
                 print("특정기간 스탯평균 검색 중")
-                avg_status_by_period_data = get_top_100_by_period(start_date, end_date, keyword="Before COVID-19")
+                avg_status_by_period_data = get_top_100_by_period(start_date, end_date)
                 avg_status_by_period_json_data = json.dumps(avg_status_by_period_data) #json 데이터로 변환
                 #print(avg_status_by_period_data)
                 print("검색 성공")
@@ -198,4 +198,31 @@ def Post_Status_Back_Approximation(request):
                 #print(searched_data)
                 return JsonResponse(searched_json_data, safe=False)
 
+        return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
+
+# 크롤링
+# [ {"date": "2022-10-08"} ] | url: /spotify/crawling
+@api_view(['POST'])
+def Post_Date_Crawling(request):
+    if request.method == 'GET':
+        return HttpResponse(status=200)
+    if request.method == 'POST':
+        json_data=json.loads(request.body)
+        serializer = DateSerializer(data = request.data, many=True)
+        if(serializer.is_valid()):
+            date=json_data[0]['date']
+            datetime_format = "%Y-%m-%d"
+            try:
+                datetime.strptime(date, datetime_format)
+            except:
+                print("잘못된 날짜입니다.")
+                return Response(serializer.data ,status=status.HTTP_404_NOT_FOUND)
+            else:
+                print("날짜별 top 100 검색 중")
+                
+                crawling_top_100_by_period(date, "2022-11-30")
+                
+                print("검색 성공")
+            
+                return Response(serializer.data ,status=200)
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)

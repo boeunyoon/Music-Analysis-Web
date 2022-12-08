@@ -29,20 +29,22 @@ class Top100ByDate(models.Model):
     rank_with_img300 = models.TextField(default = None, null=True)
     rank_with_img640 = models.TextField(default = None, null=True)
     #top100까지의 평균 스탯
-    acousticness = models.FloatField() 
-    danceability = models.FloatField()
-    energy = models.FloatField()
-    liveness = models.FloatField()
-    loudness = models.FloatField()
-    valence = models.FloatField()
-    mode = models.FloatField()
-    speechiness = models.FloatField()
-    instrumentalness = models.FloatField()
-    tempo = models.FloatField()
-    duration_ms = models.IntegerField()
+    acousticness = models.FloatField(default = None, null=True) 
+    danceability = models.FloatField(default = None, null=True)
+    energy = models.FloatField(default = None, null=True)
+    liveness = models.FloatField(default = None, null=True)
+    loudness = models.FloatField(default = None, null=True)
+    valence = models.FloatField(default = None, null=True)
+    mode = models.FloatField(default = None, null=True)
+    speechiness = models.FloatField(default = None, null=True)
+    instrumentalness = models.FloatField(default = None, null=True)
+    tempo = models.FloatField(default = None, null=True)
+    duration_ms = models.IntegerField(default = None, null=True)
     popularity = models.IntegerField(default = 0)
+    lastweek_rank = models.TextField(default = None, null = True)
     def __str__(self):
         return self.date
+
 
 class AnalysisByKeyword(models.Model):
     keyword = models.TextField()

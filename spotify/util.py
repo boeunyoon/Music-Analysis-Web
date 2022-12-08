@@ -490,53 +490,66 @@ class Spotify_audio_features:
     
 
 def get_top_100(search_date):
-    if Top100ByDate.objects.filter(date=search_date).exists():
+    exists = Top100ByDate.objects.filter(date=search_date).exists()
+    if exists:
         data = Top100ByDate.objects.get(date=search_date)
+    else:
+        data = None
+
+    if data is not None and data.acousticness is not None:
+        #data = Top100ByDate.objects.get(date=search_date)
         rank_with_title = ast.literal_eval(data.rank)#data.rank: 탑100 노래 이름
         rank_with_artist = data.rank_with_artist
         rank = []#rank: 탑100 json 형식 데이터
-        if rank_with_artist is None:
-            print("Top100ByDate 모델에 추가된 테이블에 데이터 없음")#추가된 테이블에 데이터를 추가한다.
-            saf = Spotify_audio_features()
+        # if rank_with_artist is None:
+        #     print("Top100ByDate 모델에 추가된 테이블에 데이터 없음")#추가된 테이블에 데이터를 추가한다.
+        #     saf = Spotify_audio_features()
 
-            rank_with_artist = []
-            rank_with_img64 = []
-            rank_with_img300 = []
-            rank_with_img640 = []
-            for i in range(0, 100):
-                searched_data = saf.get_features(rank_with_title[i], limit=1)
-                #print(searched_data)
-                rank_data = {
-                    "title": searched_data[0]["title"],
-                    "artist": searched_data[0]["artist"],
-                    "images": searched_data[0]["images"]
-                }
-                rank_with_artist.append(searched_data[0]["artist"])
-                rank_with_img64.append(searched_data[0]["images"][2])
-                rank_with_img300.append(searched_data[0]["images"][1])
-                rank_with_img640.append(searched_data[0]["images"][0])
-                rank.append(rank_data)
-            data.rank_with_artist = rank_with_artist
-            data.rank_with_img300 = rank_with_img300
-            data.rank_with_img64 = rank_with_img64
-            data.rank_with_img640 = rank_with_img640
-            data.save()
-        else:
-            rank_with_artist = ast.literal_eval(data.rank_with_artist)
-            rank_with_img300 = ast.literal_eval(data.rank_with_img300)
-            rank_with_img64 = ast.literal_eval(data.rank_with_img64)
-            rank_with_img640 = ast.literal_eval(data.rank_with_img640)
-            for i in range(0, 100):
-                rank_data = {
-                    "title": rank_with_title[i],
-                    "artist": rank_with_artist[i],
-                    "images": [
-                                rank_with_img640[i],
-                                rank_with_img300[i],
-                                rank_with_img64[i]
-                    ]
-                }
-                rank.append(rank_data)
+        #     rank_with_artist = []
+        #     rank_with_img64 = []
+        #     rank_with_img300 = []
+        #     rank_with_img640 = []
+        #     for i in range(0, 100):
+        #         searched_data = saf.get_features(rank_with_title[i], limit=1)
+        #         #print(searched_data)
+        #         rank_data = {
+        #             "title": searched_data[0]["title"],
+        #             "artist": searched_data[0]["artist"],
+        #             "images": searched_data[0]["images"]
+        #         }
+        #         rank_with_artist.append(searched_data[0]["artist"])
+        #         rank_with_img64.append(searched_data[0]["images"][2])
+        #         rank_with_img300.append(searched_data[0]["images"][1])
+        #         rank_with_img640.append(searched_data[0]["images"][0])
+        #         rank.append(rank_data)
+        #     data.rank_with_artist = rank_with_artist
+        #     data.rank_with_img300 = rank_with_img300
+        #     data.rank_with_img64 = rank_with_img64
+        #     data.rank_with_img640 = rank_with_img640
+        #     data.save()
+        # else:
+        rank_with_artist = ast.literal_eval(data.rank_with_artist)
+        rank_with_img300 = ast.literal_eval(data.rank_with_img300)
+        rank_with_img64 = ast.literal_eval(data.rank_with_img64)
+        rank_with_img640 = ast.literal_eval(data.rank_with_img640)
+        lastweek_rank = ast.literal_eval(data.lastweek_rank)
+        for i in range(0, 100):
+            if lastweek_rank[i] == '-': 
+                rank_difference = lastweek_rank[i]
+            else:
+                rank_difference = str((i + 1) - int(lastweek_rank[i]))
+            
+            rank_data = {
+                "title": rank_with_title[i],
+                "artist": rank_with_artist[i],
+                "images": [
+                            rank_with_img640[i],
+                            rank_with_img300[i],
+                            rank_with_img64[i]
+                ],
+                "rank_difference": rank_difference
+            }
+            rank.append(rank_data)
 
         result = {
             "date": data.date,
@@ -556,28 +569,14 @@ def get_top_100(search_date):
                 "popularity": data.popularity
             }
         }
-
+        
         return result
-    else:      
-        #빌보드 Top 100 데이터 가져오기
-        #날짜 타입은 YYYY-MM-DD
-        url = 'https://www.billboard.com/charts/hot-100/'
-
-        response = requests.get(f'{url}{search_date}')
-        response_html = response.text
-
-
-        data = BeautifulSoup(response_html, 'html.parser')
-        class_data = 'c-title a-no-trucate a-font-primary-bold-s u-letter-spacing-0021 lrv-u-font-size-18@tablet lrv-u-font-size-16 u-line-height-125 u-line-height-normal@mobile-max a-truncate-ellipsis u-max-width-330 u-max-width-230@tablet-only'
-        top_songs = data.find_all(name = 'h3', id = 'title-of-a-story', class_ = class_data)
-        top_100 = [song.get_text().strip() for song in top_songs]
-
-        #top1은 top100과 클래스가 다름
-        top_1_class_data = 'c-title a-no-trucate a-font-primary-bold-s u-letter-spacing-0021 u-font-size-23@tablet lrv-u-font-size-16 u-line-height-125 u-line-height-normal@mobile-max a-truncate-ellipsis u-max-width-245 u-max-width-230@tablet-only u-letter-spacing-0028@tablet'
-        top_1_song = data.find_all(name = 'h3', id = 'title-of-a-story', class_ = top_1_class_data)
-        top_1 = [song.get_text().strip() for song in top_1_song]
-
-        top_100.insert(0, top_1[0])
+    else:
+        if exists is False:      
+            top_100, lastweek_rank = crawling_top_100(search_date)
+        else:
+            top_100 = ast.literal_eval(data.rank)
+            lastweek_rank = ast.literal_eval(data.lastweek_rank)
 
         #평균 스탯을 계산한다.
         saf = Spotify_audio_features()
@@ -593,11 +592,16 @@ def get_top_100(search_date):
 
         for i in range(0, 100):
             searched_data = saf.get_features(top_100[i], limit=1)
+            if lastweek_rank[i] == '-': 
+                rank_difference = lastweek_rank[i]
+            else:
+                rank_difference = str((i + 1) - int(lastweek_rank[i]))
             #print(searched_data)
             rank_data = {
                 "title": searched_data[0]["title"],
                 "artist": searched_data[0]["artist"],
-                "images": searched_data[0]["images"]
+                "images": searched_data[0]["images"],
+                "rank_difference": rank_difference
             }
             rank_with_artist.append(searched_data[0]["artist"])
             rank_with_img64.append(searched_data[0]["images"][2])
@@ -655,17 +659,94 @@ def get_top_100(search_date):
             
         }
 
-        top_100_by_date = Top100ByDate(date=search_date, rank=top_100, acousticness=acousticness, danceability=danceability, 
-                                        energy=energy, liveness=liveness, loudness=loudness, valence=valence, mode=mode,
-                                        speechiness=speechiness, instrumentalness=instrumentalness, tempo=tempo, 
-                                        duration_ms=duration_ms, popularity=popularity, rank_with_artist=rank_with_artist,
-                                        rank_with_img300=rank_with_img300, rank_with_img64=rank_with_img64,
-                                        rank_with_img640=rank_with_img640)
-        top_100_by_date.save()
+
+        data = Top100ByDate.objects.get(date=search_date)
+        data.acousticness=acousticness
+        data.danceability=danceability
+        data.energy=energy
+        data.liveness=liveness
+        data.loudness=loudness
+        data.valence=valence
+        data.mode=mode
+        data.speechiness=speechiness
+        data.instrumentalness=instrumentalness
+        data.tempo=tempo
+        data.duration_ms=duration_ms
+        data. popularity=popularity
+        data.rank_with_artist = rank_with_artist
+        data.rank_with_img300 = rank_with_img300
+        data.rank_with_img64 = rank_with_img64
+        data.rank_with_img640 = rank_with_img640
+        
+        data.save()
 
         return result
 
+def crawling_top_100(search_date):
+    
+    if Top100ByDate.objects.filter(date=search_date).exists():
+        print(search_date, ": 이미 존재하는 날짜입니다.")
+    else:
+        #빌보드 Top 100 데이터 가져오기
+        #날짜 타입은 YYYY-MM-DD
+        url = 'https://www.billboard.com/charts/hot-100/'
 
+        response = requests.get(f'{url}{search_date}')
+        response_html = response.text
+
+
+        crawling = BeautifulSoup(response_html, 'html.parser')
+        class_data = 'c-title a-no-trucate a-font-primary-bold-s u-letter-spacing-0021 lrv-u-font-size-18@tablet lrv-u-font-size-16 u-line-height-125 u-line-height-normal@mobile-max a-truncate-ellipsis u-max-width-330 u-max-width-230@tablet-only'
+        top_songs = crawling.find_all(name = 'h3', id = 'title-of-a-story', class_ = class_data)
+        top_100 = [song.get_text().strip() for song in top_songs]
+
+        #top1은 top100과 클래스가 다름
+        top_1_class_data = 'c-title a-no-trucate a-font-primary-bold-s u-letter-spacing-0021 u-font-size-23@tablet lrv-u-font-size-16 u-line-height-125 u-line-height-normal@mobile-max a-truncate-ellipsis u-max-width-245 u-max-width-230@tablet-only u-letter-spacing-0028@tablet'
+        top_1_song = crawling.find_all(name = 'h3', id = 'title-of-a-story', class_ = top_1_class_data)
+        top_1 = [song.get_text().strip() for song in top_1_song]
+
+        top_100.insert(0, top_1[0])
+
+        lastweek_rank_class_data = 'c-label a-font-primary-m lrv-u-padding-tb-050@mobile-max'
+        lastweek_rank_data = crawling.find_all('span', class_ = lastweek_rank_class_data)
+        lastweek_rank = [song.get_text().strip() for song in lastweek_rank_data]
+        sorted_lastweek_rank = []
+        length = int(len(lastweek_rank)/6)
+        for i in range(0, length):
+            sorted_lastweek_rank.append(lastweek_rank[i*6])
+
+        #top1은 top100과 클래스가 다름
+        lastweek_top_1_class_data = 'c-label a-font-primary-bold-l a-font-primary-m@mobile-max u-font-weight-normal@mobile-max lrv-u-padding-tb-050@mobile-max u-font-size-32@tablet'
+        lastweek_top_1_song = crawling.find_all(name = 'span', class_ = lastweek_top_1_class_data)
+        lastweek_top_1 = [song.get_text().strip() for song in lastweek_top_1_song]
+        
+        sorted_lastweek_rank.insert(0, lastweek_top_1[0])
+        
+
+        top_100_by_date = Top100ByDate(date=search_date, rank=top_100, lastweek_rank=sorted_lastweek_rank)
+        top_100_by_date.save()
+        print(search_date)
+        return top_100, sorted_lastweek_rank
+
+def crawling_top_100_by_period(search_date, end_date):
+    start_date = search_date
+    datetime_search_date = date.fromisoformat(search_date)
+    datetime_end_date = date.fromisoformat(end_date) + datetime.timedelta(days=1)
+    period = (datetime_end_date - datetime_search_date).days
+    if period < 0:
+        search_date = end_date
+        end_date = start_date
+        start_date = search_date
+        datetime_search_date = date.fromisoformat(search_date)
+        datetime_end_date = date.fromisoformat(end_date) + datetime.timedelta(days=1)
+        period = (datetime_end_date - datetime_search_date).days
+    while(datetime_search_date!=datetime_end_date):
+        crawling_top_100(search_date)
+        datetime_search_date += datetime.timedelta(days=1)
+        search_date = date.isoformat(datetime_search_date)
+    print("크롤링 끝")
+
+            
 def get_top_100_by_period(search_date, end_date, keyword=None):
     start_date = search_date
     datetime_search_date = date.fromisoformat(search_date)
@@ -685,6 +766,10 @@ def get_top_100_by_period(search_date, end_date, keyword=None):
         print(search_date)
         if Top100ByDate.objects.filter(date=search_date).exists():
             data = Top100ByDate.objects.get(date=search_date)
+            if data.acousticness is None:
+                print("데이터 검색")
+                get_top_100(search_date)
+                data = Top100ByDate.objects.get(date=search_date)
             acousticness += data.acousticness
             danceability += data.danceability
             energy += data.energy 
