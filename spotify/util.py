@@ -15,6 +15,12 @@ import json
 #Spotify 권한
 cid = '01b9ce28405042deb84a4813e63d557d'
 secret = 'd20308c58757497191c1386264672528'
+# id1
+# 133e17352a85443a803690b5adaff2c4
+# e1bf131abfce43999e5ff0df91ac388a
+# id2
+# 01b9ce28405042deb84a4813e63d557d
+# d20308c58757497191c1386264672528
 client_credentials_manager = SpotifyClientCredentials(client_id=cid, client_secret=secret)
 
 

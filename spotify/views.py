@@ -69,6 +69,7 @@ def Post_Period_Back_Avg_STATUS(request):
 
 # 키워드 검색
 # [ {"keyword": "2022-10"} ] | url: /spotify/get-status-keyword
+# "Before COVID-19" | "After COVID-19"
 @api_view(['POST'])
 def Post_Keyword_Back_Avg_STATUS(request):
     if request.method == 'GET':
